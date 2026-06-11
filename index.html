@@ -24,6 +24,31 @@
 <!-- iOS splash screens -->
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCX47_hqcjazd4-5ep5XeS6cZFZ0eV94us",
+    authDomain: "aptos-sync.firebaseapp.com",
+    projectId: "aptos-sync",
+    storageBucket: "aptos-sync.firebasestorage.app",
+    messagingSenderId: "253617380474",
+    appId: "1:253617380474:web:2739ede9df6353f173efc3"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+
+  // Expõe logEvent para o app principal
+  window.__fbLog = (eventName, params) => {
+    try { logEvent(analytics, eventName, params); } catch(e) {}
+  };
+
+  window.dispatchEvent(new Event('firebase-ready'));
+</script>
+
 <!-- Service Worker registration -->
 <script>
   if('serviceWorker' in navigator){
@@ -679,6 +704,14 @@ function initGame(){
 
 triggerBtn.addEventListener('mousedown',handleInput);
 triggerBtn.addEventListener('touchstart',e=>{e.preventDefault();handleInput();});
+// Barra de espaço como gatilho durante o jogo
+document.addEventListener('keydown',e=>{
+  if((e.code==='Space'||e.key===' '||e.keyCode===32)&&gameActive){
+    e.preventDefault();
+    e.stopPropagation();
+    handleInput();
+  }
+},{capture:true});
 
 async function prepareGame(){
   if(gameActive||countdownRunning)return;
@@ -706,6 +739,7 @@ async function prepareGame(){
 function startGameLogic(){
   document.getElementById('ui-layer').style.display='none';
   document.getElementById('game-area').style.display='block';
+  window.focus(); // garante foco para capturar keydown
   gameActive=true;countdownRunning=false;
   score=errorsImpulse=misses=totalTargetsShown=elapsedTime=0;
   reactionTimes=[];lastCorner=-1;
@@ -794,7 +828,7 @@ function endGame(){
   if(currentStimulusElement)currentStimulusElement.remove();
   if(document.exitFullscreen)document.exitFullscreen().catch(()=>{});
   const m=calculateMetrics();const approved=isApproved(m);
-  if(currentUser){const hist=getHistory(currentUser.name);hist.push({date:new Date().toLocaleString('pt-BR'),...m,approved});saveHistory(currentUser.name,hist);}
+  if(currentUser){const hist=getHistory(currentUser.name);hist.push({date:new Date().toLocaleString('pt-BR'),...m,approved});saveHistory(currentUser.name,hist);if(window.__fbLog)window.__fbLog('test_completed',{diff_level:m.diffName,duration_s:m.duration,concentration:m.concentration,approved:approved?1:0});}
   document.getElementById('game-area').style.display='none';
   document.getElementById('ui-layer').style.display='';
   showScreen('result-screen');

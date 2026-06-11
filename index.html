@@ -7,7 +7,7 @@
 
 <!-- PWA -->
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#EDB800">
+<meta name="theme-color" content="#DA7756">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -49,16 +49,7 @@
   window.dispatchEvent(new Event('firebase-ready'));
 </script>
 
-<!-- Service Worker registration -->
-<script>
-  if('serviceWorker' in navigator){
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then(r => console.log('SW registrado:', r.scope))
-        .catch(e => console.warn('SW erro:', e));
-    });
-  }
-</script>
+<!-- Service Worker registrado no script principal -->
 <style>
 *,*::before,*::after{box-sizing:border-box;}
 body{
@@ -73,19 +64,19 @@ body{
 .screen.active{display:flex;}
 .screen-inner{width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;}
 .glass{background:rgba(6,8,24,0.72);border:1px solid rgba(255,255,255,0.08);border-radius:20px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:24px 20px;width:100%;}
-.logo-title{font-size:2rem;font-weight:800;letter-spacing:2px;background:linear-gradient(135deg,#a8edff,#EDB800,#a8edff);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 4s linear infinite;}
+.logo-title{font-size:2rem;font-weight:800;letter-spacing:2px;background:linear-gradient(135deg,#a8edff,#DA7756,#a8edff);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 6s linear infinite;}
 @keyframes shimmer{to{background-position:200% center;}}
 .logo-sub{font-size:0.7rem;letter-spacing:4px;color:#4a6080;text-transform:uppercase;margin-top:2px;}
 .logo-wrap{margin-bottom:6px;display:flex;flex-direction:column;align-items:center;}
 h2{margin:0 0 6px;color:#c8d8f0;font-size:1.05rem;font-weight:600;letter-spacing:0.5px;}
 .subtitle{font-size:0.82rem;color:#4a6080;margin:0 0 16px;line-height:1.5;}
-button.action-btn{padding:13px 28px;font-size:1rem;background:linear-gradient(135deg,#EDB800,#c89600);border:none;cursor:pointer;border-radius:10px;font-weight:700;color:#060818;box-shadow:0 4px 18px rgba(237,184,0,0.3);transition:transform 0.1s,box-shadow 0.1s;min-width:150px;letter-spacing:0.5px;}
+button.action-btn{padding:13px 28px;font-size:1rem;background:linear-gradient(135deg,#DA7756,#b85e3e);border:none;cursor:pointer;border-radius:10px;font-weight:700;color:#fff;box-shadow:0 4px 18px rgba(218,119,86,0.3);transition:transform 0.1s,box-shadow 0.1s;min-width:150px;letter-spacing:0.5px;}
 button.action-btn:active{transform:scale(0.95);box-shadow:none;}
 button.action-btn:hover{box-shadow:0 6px 24px rgba(237,184,0,0.45);}
 button.sec-btn{padding:9px 18px;font-size:0.85rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:#6888aa;cursor:pointer;border-radius:10px;transition:border-color 0.15s,color 0.15s,background 0.15s;}
-button.sec-btn:hover{border-color:rgba(237,184,0,0.5);color:#EDB800;background:rgba(237,184,0,0.06);}
+button.sec-btn:hover{border-color:rgba(218,119,86,0.5);color:#DA7756;background:rgba(218,119,86,0.06);}
 button.icon-btn{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#6888aa;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;}
-button.icon-btn:hover{background:rgba(237,184,0,0.1);border-color:rgba(237,184,0,0.4);color:#EDB800;}
+button.icon-btn:hover{background:rgba(218,119,86,0.1);border-color:rgba(218,119,86,0.4);color:#DA7756;}
 .input-group{display:flex;flex-direction:column;align-items:flex-start;width:100%;margin-bottom:12px;}
 .input-group label{font-size:0.7rem;color:#4a6080;margin-bottom:5px;letter-spacing:1px;text-transform:uppercase;}
 .input-group input{width:100%;padding:11px 14px;font-size:0.95rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:white;outline:none;transition:border-color 0.2s;}
@@ -94,10 +85,10 @@ button.icon-btn:hover{background:rgba(237,184,0,0.1);border-color:rgba(237,184,0
 .preview-box{background:rgba(255,255,255,0.03);padding:14px;border-radius:12px;margin:10px 0;border:1px solid rgba(255,255,255,0.07);display:flex;justify-content:center;width:100%;}
 .btn-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:100%;margin-top:10px;}
 .user-badge{font-size:0.72rem;color:#3a5070;margin-bottom:10px;}
-.user-badge strong{color:#EDB800;}
+.user-badge strong{color:#DA7756;}
 .hint{font-size:0.68rem;color:#2a3a50;margin-top:8px;}
 .top-bar{display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:14px;}
-.diff-badge{font-size:0.68rem;font-weight:700;letter-spacing:1px;padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,0.12);color:#EDB800;background:rgba(237,184,0,0.1);}
+.diff-badge{font-size:0.68rem;font-weight:700;letter-spacing:1px;padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,0.12);color:#DA7756;background:rgba(218,119,86,0.1);}
 .time-badge{font-size:0.68rem;font-weight:700;letter-spacing:1px;padding:3px 9px;border-radius:20px;border:1px solid rgba(100,180,255,0.2);color:#4fc3f7;background:rgba(79,195,247,0.08);}
 
 /* ── DOIS KNOBS LADO A LADO ── */
@@ -134,13 +125,13 @@ button.icon-btn:hover{background:rgba(237,184,0,0.1);border-color:rgba(237,184,0
   content:'';position:absolute;inset:3px;border-radius:50%;
   background:repeating-conic-gradient(rgba(255,255,255,0.025) 0deg 6deg, transparent 6deg 12deg);
 }
-.knob-indicator-diff{position:absolute;width:3px;height:20px;background:linear-gradient(to bottom,#EDB800,rgba(237,184,0,0));border-radius:2px;top:7px;left:50%;transform:translateX(-50%);box-shadow:0 0 8px rgba(237,184,0,0.9),0 0 20px rgba(237,184,0,0.4);}
+.knob-indicator-diff{position:absolute;width:3px;height:20px;background:linear-gradient(to bottom,#DA7756,rgba(218,119,86,0));border-radius:2px;top:7px;left:50%;transform:translateX(-50%);box-shadow:0 0 6px rgba(218,119,86,0.8),0 0 14px rgba(218,119,86,0.3);}
 .knob-indicator-time{position:absolute;width:3px;height:20px;background:linear-gradient(to bottom,#4fc3f7,rgba(79,195,247,0));border-radius:2px;top:7px;left:50%;transform:translateX(-50%);box-shadow:0 0 8px rgba(79,195,247,0.9),0 0 20px rgba(79,195,247,0.4);}
-.knob-dot-diff{width:8px;height:8px;border-radius:50%;background:#EDB800;box-shadow:0 0 10px rgba(237,184,0,1);position:absolute;bottom:5px;left:50%;transform:translateX(-50%);}
+.knob-dot-diff{width:8px;height:8px;border-radius:50%;background:#DA7756;box-shadow:0 0 8px rgba(218,119,86,0.9);position:absolute;bottom:5px;left:50%;transform:translateX(-50%);}
 .knob-dot-time{width:8px;height:8px;border-radius:50%;background:#4fc3f7;box-shadow:0 0 10px rgba(79,195,247,1);position:absolute;bottom:5px;left:50%;transform:translateX(-50%);}
 
 .knob-value{font-size:0.85rem;font-weight:700;letter-spacing:1px;margin-top:9px;text-transform:uppercase;}
-.knob-value.diff-color{color:#EDB800;}
+.knob-value.diff-color{color:#DA7756;}
 .knob-value.time-color{color:#4fc3f7;}
 .knob-sub{font-size:0.6rem;color:#3a5070;margin-top:2px;}
 
@@ -189,7 +180,7 @@ button.icon-btn:hover{background:rgba(237,184,0,0.1);border-color:rgba(237,184,0
 
 /* ── COUNTDOWN ── */
 #countdown-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(6,8,24,0.93);z-index:300;display:none;justify-content:center;align-items:center;flex-direction:column;gap:12px;}
-.countdown-num{font-size:clamp(5rem,20vw,10rem);font-weight:800;color:#EDB800;font-family:monospace;text-shadow:0 0 40px rgba(237,184,0,0.6);line-height:1;}
+.countdown-num{font-size:clamp(5rem,20vw,10rem);font-weight:800;color:#DA7756;font-family:monospace;text-shadow:0 0 30px rgba(218,119,86,0.5);line-height:1;}
 .countdown-info{font-size:0.75rem;color:#3a5070;letter-spacing:2px;text-transform:uppercase;}
 
 /* ── JOGO ── */
@@ -198,12 +189,78 @@ button.icon-btn:hover{background:rgba(237,184,0,0.1);border-color:rgba(237,184,0
 .stimulus-container{position:absolute;width:94px;height:94px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;padding:6px;z-index:15;background:rgba(0,0,0,0.55);border-radius:13px;border:1px solid rgba(255,255,255,0.06);box-shadow:0 8px 24px rgba(0,0,0,0.6);}
 .sq{width:100%;height:100%;border-radius:9px;}
 .sq.empty{background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.15);}
-.sq.gold{background:linear-gradient(135deg,#EDCF57,#EDB800,#D4A900);box-shadow:0 0 14px rgba(237,184,0,0.65),0 2px 6px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.22);}
+.sq.gold{background:linear-gradient(135deg,#c8a84b,#b8962a,#a07820);box-shadow:0 0 7px rgba(180,140,40,0.45),0 2px 4px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.15);}
 #action-bar{position:absolute;bottom:0;left:0;width:100%;height:100px;background:linear-gradient(to top,rgba(6,8,24,0.98),rgba(6,8,24,0.7));display:flex;justify-content:center;align-items:center;z-index:50;border-top:1px solid rgba(255,255,255,0.05);backdrop-filter:blur(8px);}
-#trigger-btn{width:min(85%,500px);height:65px;background:#F3E5AB;color:#5a4a00;border:2px solid #d4c47a;border-radius:35px;font-size:1.2rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;cursor:pointer;touch-action:manipulation;outline:none;transition:all 0.1s;box-shadow:0 4px 20px rgba(243,229,171,0.2);}
-#trigger-btn:active{transform:scale(0.97);background:#e8d890;}
-.btn-flash{background:rgba(243,229,171,0.4)!important;border-color:rgba(243,229,171,0.6)!important;box-shadow:0 0 20px rgba(243,229,171,0.35)!important;}
+#trigger-btn{width:min(85%,500px);height:65px;background:#404040;color:#c8c8c8;border:2px solid #555;border-radius:35px;font-size:1.2rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;cursor:pointer;touch-action:manipulation;outline:none;transition:all 0.1s;box-shadow:0 4px 20px rgba(0,0,0,0.4);}
+#trigger-btn:active{transform:scale(0.97);background:#4a4a4a;}
+.btn-flash{background:#505050!important;border-color:#777!important;box-shadow:0 0 16px rgba(255,255,255,0.12)!important;}
+/* ── UPDATE MODAL ── */
+#update-modal{
+  position:fixed;inset:0;z-index:9999;
+  display:none;justify-content:center;align-items:flex-end;
+  padding:0 0 24px;
+  background:rgba(0,0,0,0);
+  transition:background 0.3s;
+}
+#update-modal.visible{
+  display:flex;
+  background:rgba(0,0,0,0.6);
+}
+.update-card{
+  width:100%;max-width:420px;
+  background:rgba(10,14,30,0.97);
+  border:1px solid rgba(218,119,86,0.25);
+  border-radius:20px 20px 16px 16px;
+  padding:22px 20px 18px;
+  backdrop-filter:blur(20px);
+  box-shadow:0 -8px 40px rgba(0,0,0,0.6);
+  transform:translateY(120%);
+  transition:transform 0.4s cubic-bezier(0.34,1.2,0.64,1);
+}
+#update-modal.visible .update-card{transform:translateY(0);}
+.update-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.update-icon{font-size:1.4rem;}
+.update-title{font-size:1rem;font-weight:700;color:#DA7756;letter-spacing:0.5px;}
+.update-version{font-size:0.68rem;color:#3a5070;margin-left:auto;letter-spacing:1px;}
+.update-changelog{
+  list-style:none;margin:0 0 16px;padding:0;
+  border-left:2px solid rgba(218,119,86,0.2);
+  padding-left:12px;
+}
+.update-changelog li{
+  font-size:0.78rem;color:#8aa0b8;
+  padding:3px 0;line-height:1.4;
+}
+.update-changelog li::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#DA7756;margin-right:8px;vertical-align:middle;opacity:0.7;}
+.update-actions{display:flex;gap:10px;}
+.update-btn-primary{
+  flex:1;padding:11px;border:none;border-radius:10px;
+  background:linear-gradient(135deg,#DA7756,#b85e3e);
+  color:#fff;font-weight:700;font-size:0.9rem;cursor:pointer;
+  box-shadow:0 4px 14px rgba(218,119,86,0.3);
+  transition:transform 0.1s;
+}
+.update-btn-primary:active{transform:scale(0.97);}
+.update-btn-later{
+  padding:11px 16px;border:1px solid rgba(255,255,255,0.1);
+  border-radius:10px;background:transparent;
+  color:#4a6080;font-size:0.85rem;cursor:pointer;
+  transition:color 0.15s,border-color 0.15s;
+}
+.update-btn-later:hover{color:#6888aa;border-color:rgba(255,255,255,0.2);}
 @media(min-width:600px){.screen-inner{max-width:440px;}}
+/* Landscape mobile */
+@media(max-height:500px) and (orientation:landscape){
+  .screen{padding:12px 16px;min-height:100vh;}
+  .screen-inner{max-width:600px;flex-direction:row;flex-wrap:wrap;align-items:flex-start;gap:12px;}
+  .logo-wrap{width:100%;margin-bottom:6px;}
+  .glass{padding:14px 16px;}
+  #action-bar{height:70px;}
+  #trigger-btn{height:50px;font-size:1rem;}
+  .stimulus-container{width:76px;height:76px;}
+  #update-modal{align-items:center;padding:0 16px;}
+  .update-card{border-radius:16px;}
+}
 </style>
 </head>
 <body>
@@ -263,7 +320,7 @@ button.icon-btn:hover{background:rgba(237,184,0,0.1);border-color:rgba(237,184,0
             <div class="sq empty"></div><div class="sq empty"></div>
           </div>
         </div>
-        <p id="target-desc" style="color:#EDB800;font-weight:700;margin:0 0 12px;font-size:0.85rem;letter-spacing:1px;"></p>
+        <p id="target-desc" style="color:#DA7756;font-weight:700;margin:0 0 12px;font-size:0.85rem;letter-spacing:1px;"></p>
         <button class="action-btn" id="start-btn" onclick="prepareGame()" style="width:100%;margin-bottom:10px;">INICIAR TESTE</button>
         <div class="btn-row" style="margin-top:0;">
           <button class="sec-btn" onclick="showHistory()">📋 Histórico</button>
@@ -368,7 +425,7 @@ button.icon-btn:hover{background:rgba(237,184,0,0.1);border-color:rgba(237,184,0
           <div class="legend-item"><div class="legend-dot" style="background:#4fc3f7"></div>Reação</div>
           <div class="legend-item"><div class="legend-dot" style="background:#aed581"></div>Atenção</div>
           <div class="legend-item"><div class="legend-dot" style="background:#ffb74d"></div>Impulso</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#EDB800"></div>Concentração</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#DA7756"></div>Concentração</div>
           <div class="legend-item"><div class="legend-dot" style="background:transparent;border:1px dashed #333;"></div>Meta 70%</div>
         </div>
         <div class="btn-row">
@@ -395,6 +452,22 @@ button.icon-btn:hover{background:rgba(237,184,0,0.1);border-color:rgba(237,184,0
     </div>
   </div>
 
+</div>
+
+<!-- UPDATE MODAL -->
+<div id="update-modal">
+  <div class="update-card">
+    <div class="update-header">
+      <span class="update-icon">🚀</span>
+      <span class="update-title">Atualização disponível</span>
+      <span class="update-version" id="update-version-label"></span>
+    </div>
+    <ul class="update-changelog" id="update-changelog"></ul>
+    <div class="update-actions">
+      <button class="update-btn-primary" onclick="applyUpdate()">Atualizar agora</button>
+      <button class="update-btn-later" onclick="dismissUpdate()">Depois</button>
+    </div>
+  </div>
 </div>
 
 <!-- JOGO -->
@@ -642,7 +715,7 @@ function setDiffLevel(idx){
   }
   const nm=document.getElementById('knob-diff-name');if(nm)nm.innerText=d.name;
   const ds=document.getElementById('knob-diff-desc');if(ds)ds.innerText=d.desc;
-  drawKnobArc('knob-diff-canvas',currentDiffIdx/3,'#EDB800');
+  drawKnobArc('knob-diff-canvas',currentDiffIdx/3,'#DA7756');
   updateBadges();
   if(currentUser)saveUserPref(currentUser.name,{diffIdx:currentDiffIdx,timeIdx:currentTimeIdx});
 }
@@ -663,7 +736,7 @@ function setTimeLevel(idx){
 }
 
 function initKnobs(){
-  makeKnob({wrapId:'knob-diff-wrap',canvasId:'knob-diff-canvas',outerGlowClass:'active-glow-diff',innerId:'knob-diff-inner',steps:4,getIdx:()=>currentDiffIdx,setFn:setDiffLevel,color:'#EDB800'});
+  makeKnob({wrapId:'knob-diff-wrap',canvasId:'knob-diff-canvas',outerGlowClass:'active-glow-diff',innerId:'knob-diff-inner',steps:4,getIdx:()=>currentDiffIdx,setFn:setDiffLevel,color:'#DA7756'});
   makeKnob({wrapId:'knob-time-wrap',canvasId:'knob-time-canvas',outerGlowClass:'active-glow-time',innerId:'knob-time-inner',steps:TIME_STEPS,getIdx:()=>currentTimeIdx,setFn:setTimeLevel,color:'#4fc3f7'});
   setDiffLevel(currentDiffIdx);
   setTimeLevel(currentTimeIdx);
@@ -804,10 +877,11 @@ function flashButton(){triggerBtn.classList.add('btn-flash');setTimeout(()=>trig
 /* ══════ MÉTRICAS ══════ */
 function calculateMetrics(){
   let avgReaction=0,reactionScore=0;
-  if(reactionTimes.length>0){avgReaction=reactionTimes.reduce((a,b)=>a+b,0)/reactionTimes.length;reactionScore=Math.min(100,Math.max(0,100-((avgReaction-300)/5)));}
+  if(reactionTimes.length>0){avgReaction=reactionTimes.reduce((a,b)=>a+b,0)/reactionTimes.length;reactionScore=Math.min(100,Math.max(0,100-((avgReaction-350)/5)));}
   const attentionScore=totalTargetsShown>0?(score/totalTargetsShown)*100:0;
-  const impulseScore=Math.max(0,100-errorsImpulse*20);
-  const concentrationScore=attentionScore*0.4+impulseScore*0.4+reactionScore*0.2;
+  const totalStimuli=totalTargetsShown+(errorsImpulse>0?errorsImpulse:0);
+  const impulseScore=totalStimuli>0?Math.max(0,100-(errorsImpulse/totalStimuli)*100):100;
+  const concentrationScore=attentionScore*0.35+impulseScore*0.40+reactionScore*0.25;
   return{reaction:Math.round(reactionScore),attention:Math.round(attentionScore),impulse:Math.round(impulseScore),concentration:Math.round(concentrationScore),avgMs:Math.round(avgReaction),hits:score,misses,impulseErrors:errorsImpulse,diffIdx:currentDiffIdx,diffName:DIFF_LEVELS[currentDiffIdx].name,duration:currentGameDuration};
 }
 
@@ -884,13 +958,98 @@ function drawChart(hist){
   const n=hist.length;
   ctx.fillStyle='#2a3a50';ctx.textAlign='center';ctx.font='9px Segoe UI';
   hist.forEach((_,i)=>{const x=PL+(n===1?pw/2:i/(n-1)*pw);ctx.fillText(i+1,x,H-PB+12);});
-  [{key:'reaction',color:'#4fc3f7'},{key:'attention',color:'#aed581'},{key:'impulse',color:'#ffb74d'},{key:'concentration',color:'#EDB800'}].forEach(({key,color})=>{
+  [{key:'reaction',color:'#4fc3f7'},{key:'attention',color:'#aed581'},{key:'impulse',color:'#ffb74d'},{key:'concentration',color:'#DA7756'}].forEach(({key,color})=>{
     ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineJoin='round';
     hist.forEach((h,i)=>{const x=PL+(n===1?pw/2:i/(n-1)*pw);const y=PT+ph-(h[key]/100)*ph;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
     ctx.stroke();
     hist.forEach((h,i)=>{const x=PL+(n===1?pw/2:i/(n-1)*pw);const y=PT+ph-(h[key]/100)*ph;ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();});
   });
 }
+
+/* ══════════════════════════════════════════════════════
+   SISTEMA DE ATUALIZAÇÃO
+══════════════════════════════════════════════════════ */
+const APP_VERSION = '1.1.0';
+let swRegistration = null;
+let updatePending = false;
+
+// Registra SW e escuta eventos de update
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    swRegistration = reg;
+
+    // SW novo instalando — ficou esperando
+    reg.addEventListener('updatefound', () => {
+      const newSW = reg.installing;
+      newSW.addEventListener('statechange', () => {
+        if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+          // Há versão nova instalada esperando — busca changelog
+          fetchAndShowUpdate();
+        }
+      });
+    });
+
+    // Verifica se já tem update esperando ao abrir
+    if (reg.waiting && navigator.serviceWorker.controller) {
+      fetchAndShowUpdate();
+    }
+  }).catch(e => console.warn('SW:', e));
+
+  // Mensagem do SW avisando que foi ativado (update aplicado)
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data && e.data.type === 'SW_UPDATED') {
+      window.location.reload();
+    }
+  });
+}
+
+// Busca version.json e exibe o modal
+async function fetchAndShowUpdate() {
+  try {
+    const res = await fetch('/version.json?t=' + Date.now());
+    const data = await res.json();
+    if (data.version === APP_VERSION) return; // mesma versão, ignora
+    showUpdateModal(data);
+  } catch(e) {
+    // Sem conexão — exibe modal sem changelog detalhado
+    showUpdateModal({ version: 'nova', changelog: ['Melhorias de desempenho e correções'] });
+  }
+}
+
+// Exibe o modal com animação
+function showUpdateModal(data) {
+  updatePending = true;
+  const modal   = document.getElementById('update-modal');
+  const label   = document.getElementById('update-version-label');
+  const list    = document.getElementById('update-changelog');
+  label.innerText = 'v' + data.version;
+  list.innerHTML  = (data.changelog || [])
+    .map(item => `<li>${item}</li>`).join('');
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => requestAnimationFrame(() => modal.classList.add('visible')));
+}
+
+// Usuário confirmou — manda SW assumir controle
+function applyUpdate() {
+  dismissUpdate();
+  if (swRegistration && swRegistration.waiting) {
+    swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+  } else {
+    window.location.reload();
+  }
+}
+
+// Usuário dispensou — fecha modal
+function dismissUpdate() {
+  const modal = document.getElementById('update-modal');
+  modal.classList.remove('visible');
+  setTimeout(() => { modal.style.display = 'none'; }, 400);
+}
+
+// Fecha modal ao clicar no fundo
+document.getElementById('update-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('update-modal')) dismissUpdate();
+});
 
 /* ══════ BOOT ══════ */
 window.addEventListener('load',()=>{initKnobs();showScreen('login-screen');});

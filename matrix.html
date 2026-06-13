@@ -144,8 +144,11 @@ function startGame(){
 }
 
 function updateLives(){
-  const ls=document.getElementById('lives').children;
-  for(let i=0;i<3;i++) ls[i].classList.toggle('active',i<lives);
+  const ls=document.getElementById('lives');
+  if(!ls||!ls.children) return;
+  for(let i=0;i<3;i++){
+    if(ls.children[i]) ls.children[i].classList.toggle('active',i<lives);
+  }
 }
 
 function updateMetrics(){

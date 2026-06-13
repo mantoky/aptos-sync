@@ -1,13 +1,10 @@
 {
-  "version": "1.4.0",
+  "version": "1.6.0",
   "date": "2026-06-13",
   "changelog": [
-    "🎮 Pack Cognitivo completo — 7 jogos integrados",
-    "🔢 N-Back Lite — memória de trabalho com adaptação automática",
-    "🎨 Stroop Color — controle inibitório com 3 níveis",
-    "🟣 Matrix Sequence — Corsi Block, memória visuoespacial",
-    "🔄 Task Switch — flexibilidade cognitiva com custo de troca",
-    "👁️ Visual Search — atenção seletiva em grades progressivas",
-    "🔵 Dual Task — atenção dividida visual + auditiva"
+    "🧪 Teste A/B do Board Games Pack — escolha sua versão",
+    "📊 Dashboard de aderência disponível (toque no badge de versão)",
+    "♟ Versão B inclui 7 jogos de tabuleiro clássicos",
+    "📈 Eventos rastreados localmente com privacidade total"
   ]
 }

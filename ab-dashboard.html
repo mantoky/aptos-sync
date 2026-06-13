@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Aptos Sync — Dashboard A/B</title>
+<style>
+:root{
+  --bg:#060818;--card:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);
+  --text:#c8d8f0;--muted:#4a6080;--dim:#2a3a50;
+  --A:#DA7756;--B:#4fc3f7;--success:#00e676;--danger:#ff6b6b;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);
+  min-height:100vh;padding:20px 16px 40px;}
+.container{max-width:680px;margin:0 auto;}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{font-size:1.5rem;}
+.logo-title{font-size:1.1rem;font-weight:800;color:var(--text);letter-spacing:.5px;}
+.logo-sub{font-size:.68rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.refresh-btn{background:var(--card);border:1px solid var(--border);color:var(--muted);
+  padding:7px 14px;border-radius:8px;font-size:.78rem;cursor:pointer;transition:.15s;}
+.refresh-btn:hover{border-color:var(--B);color:var(--B);}
+.back-btn{background:transparent;border:1px solid var(--border);color:var(--muted);
+  padding:7px 14px;border-radius:8px;font-size:.78rem;cursor:pointer;transition:.15s;}
+.back-btn:hover{color:var(--text);}
+
+/* DEVICE NOTICE */
+.device-notice{background:rgba(79,195,247,.06);border:1px solid rgba(79,195,247,.15);
+  border-radius:12px;padding:12px 16px;margin-bottom:20px;
+  font-size:.78rem;color:#4a6080;line-height:1.5;}
+.device-notice strong{color:var(--B);}
+
+/* SECTION */
+.section-title{font-size:.62rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;
+  margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+
+/* STATUS CARD */
+.status-card{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:18px;margin-bottom:16px;}
+
+/* CHOICE DISPLAY */
+.choice-big{display:flex;align-items:center;gap:14px;margin-bottom:8px;}
+.choice-pill{padding:6px 18px;border-radius:20px;font-size:1rem;font-weight:800;
+  letter-spacing:1px;text-transform:uppercase;}
+.pill-A{background:rgba(218,119,86,.15);color:var(--A);border:1px solid rgba(218,119,86,.3);}
+.pill-B{background:rgba(79,195,247,.15);color:var(--B);border:1px solid rgba(79,195,247,.3);}
+.pill-none{background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--border);}
+.choice-desc{font-size:.8rem;color:var(--muted);line-height:1.5;}
+.choice-action{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;}
+.choice-action button{padding:8px 16px;border-radius:8px;font-size:.78rem;
+  font-weight:700;cursor:pointer;border:none;transition:.15s;}
+.btn-switch-B{background:rgba(79,195,247,.15);color:var(--B);border:1px solid rgba(79,195,247,.3);}
+.btn-switch-B:hover{background:rgba(79,195,247,.25);}
+.btn-switch-A{background:rgba(218,119,86,.12);color:var(--A);border:1px solid rgba(218,119,86,.25);}
+.btn-switch-A:hover{background:rgba(218,119,86,.22);}
+.btn-reset{background:rgba(255,107,107,.08);color:var(--danger);border:1px solid rgba(255,107,107,.2);}
+.btn-reset:hover{background:rgba(255,107,107,.18);}
+
+/* METRICS GRID */
+.metrics-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;}
+.metric-card{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:14px;text-align:center;}
+.metric-val{font-size:1.8rem;font-weight:900;line-height:1;}
+.metric-lbl{font-size:.65rem;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.5px;margin-top:5px;}
+.metric-sub{font-size:.68rem;color:var(--dim);margin-top:3px;}
+@media(min-width:400px){.metrics-grid{grid-template-columns:repeat(3,1fr);}}
+
+/* ADERÊNCIA BAR */
+.adherence-section{background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:18px;margin-bottom:16px;}
+.adherence-label{display:flex;justify-content:space-between;margin-bottom:8px;font-size:.8rem;}
+.adherence-bar-wrap{height:12px;background:rgba(255,255,255,.05);border-radius:6px;overflow:hidden;margin-bottom:4px;}
+.adherence-bar-fill{height:100%;border-radius:6px;transition:width 1.2s cubic-bezier(.34,1.2,.64,1);}
+.adherence-status{font-size:.72rem;color:var(--muted);text-align:right;}
+.threshold-line{margin-top:8px;font-size:.7rem;color:var(--dim);}
+
+/* VERDICT */
+.verdict{border-radius:14px;padding:14px 16px;margin-bottom:16px;font-size:.82rem;line-height:1.6;}
+.verdict-deploy{background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);color:#00c070;}
+.verdict-wait{background:rgba(255,183,77,.08);border:1px solid rgba(255,183,77,.2);color:#ffb74d;}
+.verdict-low{background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);color:var(--danger);}
+.verdict-none{background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--muted);}
+.verdict-icon{font-size:1.1rem;margin-bottom:4px;}
+
+/* EVENTS LOG */
+.events-section{background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:18px;margin-bottom:16px;}
+.event-list{max-height:240px;overflow-y:auto;}
+.event-item{display:flex;align-items:center;gap:10px;padding:7px 0;
+  border-bottom:1px solid rgba(255,255,255,.03);font-size:.75rem;}
+.event-item:last-child{border-bottom:none;}
+.ev-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.ev-dot-A{background:var(--A);}
+.ev-dot-B{background:var(--B);}
+.ev-dot-N{background:var(--muted);}
+.ev-type{color:var(--text);font-weight:600;min-width:110px;}
+.ev-time{color:var(--dim);font-size:.68rem;margin-left:auto;white-space:nowrap;}
+.ev-meta{color:var(--muted);font-size:.7rem;}
+.events-empty{color:var(--dim);font-size:.8rem;padding:12px 0;text-align:center;}
+.event-list::-webkit-scrollbar{width:3px;}
+.event-list::-webkit-scrollbar-thumb{background:var(--dim);border-radius:2px;}
+
+/* GAMES CHART */
+.games-section{background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:18px;margin-bottom:16px;}
+.game-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:.78rem;}
+.game-bar-name{min-width:120px;color:var(--text);}
+.game-bar-wrap{flex:1;height:8px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;}
+.game-bar-fill{height:100%;border-radius:4px;background:var(--B);}
+.game-bar-count{min-width:24px;text-align:right;color:var(--muted);}
+
+/* TIMELINE */
+.timeline-section{background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:18px;margin-bottom:16px;}
+#timeline-canvas{width:100%;border-radius:8px;background:rgba(0,0,0,.3);display:block;}
+
+/* FOOTER */
+.footer{text-align:center;color:var(--dim);font-size:.7rem;margin-top:24px;line-height:1.8;}
+.export-btn{background:var(--card);border:1px solid var(--border);color:var(--muted);
+  padding:8px 18px;border-radius:8px;font-size:.78rem;cursor:pointer;margin-top:10px;transition:.15s;}
+.export-btn:hover{border-color:var(--B);color:var(--B);}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="logo">
+      <span class="logo-icon">📊</span>
+      <div>
+        <div class="logo-title">Dashboard A/B</div>
+        <div class="logo-sub">Aptos Sync · Board Games Pack</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="back-btn" onclick="goBack()">← Voltar</button>
+      <button class="refresh-btn" onclick="loadDashboard()">↻ Atualizar</button>
+    </div>
+  </div>
+
+  <div class="device-notice">
+    <strong>📱 Dados deste dispositivo</strong> — Este dashboard exibe os eventos registrados localmente.
+    Para dados agregados de todos os usuários, acesse o <strong>Firebase Console → Analytics</strong> e filtre pelo evento <strong>ab_event</strong>.
+  </div>
+
+  <!-- STATUS ATUAL -->
+  <div class="section-title">Status da Versão</div>
+  <div class="status-card">
+    <div class="choice-big">
+      <div class="choice-pill" id="choice-pill">—</div>
+      <div>
+        <div style="font-size:.88rem;font-weight:700;color:var(--text);" id="choice-title">Não decidido</div>
+        <div class="choice-desc" id="choice-desc">Usuário ainda não viu o modal de teste.</div>
+      </div>
+    </div>
+    <div class="choice-action" id="choice-actions"></div>
+  </div>
+
+  <!-- MÉTRICAS NUMÉRICAS -->
+  <div class="section-title">Métricas da Sessão</div>
+  <div class="metrics-grid" id="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-val" id="m-sessions" style="color:var(--B)">0</div>
+      <div class="metric-lbl">Sessões</div>
+      <div class="metric-sub">neste device</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" id="m-games" style="color:#a78bfa">0</div>
+      <div class="metric-lbl">Jogos abertos</div>
+      <div class="metric-sub">total</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" id="m-days" style="color:#00e676">0</div>
+      <div class="metric-lbl">Dias</div>
+      <div class="metric-sub">desde 1ª sessão</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" id="m-board-pct" style="color:var(--B)">0%</div>
+      <div class="metric-lbl">Board Games</div>
+      <div class="metric-sub">% dos jogos</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" id="m-switches" style="color:#ffb74d">0</div>
+      <div class="metric-lbl">Trocas A↔B</div>
+      <div class="metric-sub">mudanças</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" id="m-events" style="color:var(--muted)">0</div>
+      <div class="metric-lbl">Eventos</div>
+      <div class="metric-sub">registrados</div>
+    </div>
+  </div>
+
+  <!-- BARRA DE ADERÊNCIA -->
+  <div class="section-title">Aderência à Versão B</div>
+  <div class="adherence-section">
+    <div class="adherence-label">
+      <span style="color:var(--muted);font-size:.75rem;">Taxa de uso da versão nova</span>
+      <span style="font-weight:800;" id="adherence-pct">0%</span>
+    </div>
+    <div class="adherence-bar-wrap">
+      <div class="adherence-bar-fill" id="adherence-bar" style="width:0%;background:var(--danger);"></div>
+    </div>
+    <div class="adherence-status" id="adherence-status">Aguardando dados...</div>
+    <div class="threshold-line">Limiar para deploy: <strong style="color:var(--success);">≥ 70% de aderência</strong> sustentada por ≥ 3 sessões</div>
+  </div>
+
+  <!-- VEREDICTO -->
+  <div class="section-title">Veredicto</div>
+  <div class="verdict" id="verdict">
+    <div class="verdict-icon">⏳</div>
+    <div id="verdict-text">Aguardando dados suficientes para emitir recomendação.</div>
+  </div>
+
+  <!-- JOGOS MAIS ABERTOS -->
+  <div class="section-title">Jogos mais acessados</div>
+  <div class="games-section" id="games-chart">
+    <div class="events-empty">Nenhum jogo aberto ainda.</div>
+  </div>
+
+  <!-- LINHA DO TEMPO -->
+  <div class="section-title">Linha do tempo de eventos</div>
+  <div class="timeline-section">
+    <canvas id="timeline-canvas" height="100"></canvas>
+  </div>
+
+  <!-- LOG DE EVENTOS -->
+  <div class="section-title">Log de eventos recentes</div>
+  <div class="events-section">
+    <div class="event-list" id="event-list">
+      <div class="events-empty">Nenhum evento registrado neste dispositivo.</div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:4px;">
+    <button class="export-btn" onclick="exportData()">⬇ Exportar dados (JSON)</button>
+  </div>
+
+  <div class="footer">
+    Dashboard A/B · Aptos Sync v1.5.0<br>
+    Dados armazenados localmente · Privacidade garantida<br>
+    <small>Para dados globais: Firebase Console → Events → ab_event</small>
+  </div>
+</div>
+
+<script>
+const AB_KEY        = 'as_ab_choice';
+const AB_SESSIONS   = 'as_ab_sessions';
+const AB_EVENTS     = 'as_ab_events';
+const AB_FIRST_SEEN = 'as_ab_first_seen';
+
+// Nomes amigáveis dos jogos
+const GAME_NAMES = {
+  'brainhunter.html':  'BrainHunter Pro',
+  'nback.html':        'N-Back Lite',
+  'stroop.html':       'Stroop Color',
+  'matrix.html':       'Matrix Sequence',
+  'taskswitch.html':   'Task Switch',
+  'visualsearch.html': 'Visual Search',
+  'dualtask.html':     'Dual Task',
+  'board-games.html':  '♟ Board Games (lobby)',
+  'damas.html':        'Damas',
+  'ludo.html':         'Ludo',
+  'reversi.html':      'Reversi',
+  'connect-four.html': 'Connect Four',
+  'batalha-naval.html':'Batalha Naval',
+  'velha.html':        'Jogo da Velha+',
+  'sudoku.html':       'Sudoku',
+};
+
+const BOARD_GAMES = ['board-games.html','damas.html','ludo.html','reversi.html',
+  'connect-four.html','batalha-naval.html','velha.html','sudoku.html'];
+
+function loadDashboard(){
+  const choice   = localStorage.getItem(AB_KEY);
+  const sessions = parseInt(localStorage.getItem(AB_SESSIONS)||'0');
+  const firstSeen= parseInt(localStorage.getItem(AB_FIRST_SEEN)||'0');
+  const eventsRaw= localStorage.getItem(AB_EVENTS)||'[]';
+  let events=[];
+  try{ events=JSON.parse(eventsRaw); }catch(e){}
+
+  // ── Status da versão ──
+  renderStatus(choice, sessions);
+
+  // ── Métricas numéricas ──
+  const gamesEvents = events.filter(e=>e.type==='game_open');
+  const boardEvents = gamesEvents.filter(e=>BOARD_GAMES.includes(e.game));
+  const switchEvents= events.filter(e=>e.type==='choice');
+  const days = firstSeen ? Math.max(1,Math.round((Date.now()-firstSeen)/(86400000))) : 0;
+  const boardPct = gamesEvents.length>0 ? Math.round(boardEvents.length/gamesEvents.length*100) : 0;
+
+  document.getElementById('m-sessions').innerText = sessions;
+  document.getElementById('m-games').innerText    = gamesEvents.length;
+  document.getElementById('m-days').innerText     = days;
+  document.getElementById('m-board-pct').innerText= boardPct+'%';
+  document.getElementById('m-switches').innerText = Math.max(0,switchEvents.length-1);
+  document.getElementById('m-events').innerText   = events.length;
+
+  // ── Aderência ──
+  renderAdherence(choice, sessions, boardPct, gamesEvents.length);
+
+  // ── Veredicto ──
+  renderVerdict(choice, sessions, boardPct, gamesEvents.length);
+
+  // ── Games chart ──
+  renderGamesChart(gamesEvents);
+
+  // ── Timeline ──
+  renderTimeline(events);
+
+  // ── Log ──
+  renderEventLog(events);
+}
+
+function renderStatus(choice, sessions){
+  const pill  = document.getElementById('choice-pill');
+  const title = document.getElementById('choice-title');
+  const desc  = document.getElementById('choice-desc');
+  const acts  = document.getElementById('choice-actions');
+
+  if(choice==='B'){
+    pill.className='choice-pill pill-B'; pill.innerText='Versão B';
+    title.innerText='Testando Board Games Pack';
+    desc.innerText='Este dispositivo está na versão com os 7 jogos de tabuleiro integrados.';
+    acts.innerHTML=`
+      <button class="btn-switch-A" onclick="switchTo('A')">Voltar para versão A</button>
+      <button class="btn-reset" onclick="resetAB()">Limpar dados do teste</button>`;
+  } else if(choice==='A'){
+    pill.className='choice-pill pill-A'; pill.innerText='Versão A';
+    title.innerText='Versão estável (sem Board Games)';
+    desc.innerText='Usuário preferiu a versão atual. Board Games Pack não está ativo.';
+    acts.innerHTML=`
+      <button class="btn-switch-B" onclick="switchTo('B')">Ativar versão B</button>
+      <button class="btn-reset" onclick="resetAB()">Limpar dados do teste</button>`;
+  } else {
+    pill.className='choice-pill pill-none'; pill.innerText='—';
+    title.innerText='Não decidido';
+    desc.innerText=`${sessions} sessão${sessions!==1?'ões':''} sem interação com o modal.`;
+    acts.innerHTML=`
+      <button class="btn-switch-B" onclick="switchTo('B')">Forçar versão B</button>
+      <button class="btn-switch-A" onclick="switchTo('A')">Forçar versão A</button>`;
+  }
+}
+
+function renderAdherence(choice, sessions, boardPct, totalGames){
+  const bar    = document.getElementById('adherence-bar');
+  const pctEl  = document.getElementById('adherence-pct');
+  const status = document.getElementById('adherence-status');
+
+  // Aderência = % de sessões onde está na versão B (local: 0 ou 100%)
+  // Melhor indicador: jogos do board games / total de jogos abertos
+  let adherence = 0;
+  if(choice==='B') adherence = totalGames>0 ? boardPct : 50;
+  else if(choice==='A') adherence = 0;
+  else adherence = 0;
+
+  pctEl.innerText = adherence+'%';
+  bar.style.width = adherence+'%';
+  bar.style.background = adherence>=70?'var(--success)':adherence>=40?'#ffb74d':'var(--danger)';
+
+  if(choice==='B' && sessions>=3 && adherence>=70)
+    status.innerText = '✅ Aderência alta — condições para deploy da versão B';
+  else if(choice==='B' && adherence>=40)
+    status.innerText = `⏳ Aderência moderada — aguarde mais ${Math.max(0,3-sessions)} sessão${3-sessions!==1?'ões':''} para confirmar`;
+  else if(choice==='A')
+    status.innerText = '↩ Versão A preferida neste dispositivo';
+  else
+    status.innerText = 'Aguardando decisão do usuário';
+}
+
+function renderVerdict(choice, sessions, boardPct, totalGames){
+  const el   = document.getElementById('verdict');
+  const text = document.getElementById('verdict-text');
+
+  if(!choice || sessions < 1){
+    el.className='verdict verdict-none';
+    text.innerHTML='<div style="margin-bottom:4px;">⏳ <strong>Aguardando dados</strong></div>O usuário ainda não interagiu com o modal do teste A/B. O veredicto estará disponível após ao menos 1 escolha.';
+    return;
+  }
+  if(choice==='A'){
+    el.className='verdict verdict-low';
+    text.innerHTML='<div style="margin-bottom:4px;">↩ <strong>Preferência pela versão atual</strong></div>Este dispositivo optou pela versão estável. Mantenha o teste ativo para outros usuários. <strong>Não substitua</strong> até atingir ≥70% de aderência global.';
+    return;
+  }
+  if(choice==='B' && sessions>=3 && boardPct>=70){
+    el.className='verdict verdict-deploy';
+    text.innerHTML='<div style="margin-bottom:4px;">🚀 <strong>Pronto para deploy!</strong></div>Aderência de <strong>'+boardPct+'%</strong> por '+sessions+' sessões. Condições satisfeitas para promover o Board Games Pack à versão padrão. <br><br>Próximo passo: <code>git push → firebase deploy</code> com Board Games como padrão.';
+    return;
+  }
+  if(choice==='B' && sessions>=2){
+    el.className='verdict verdict-wait';
+    text.innerHTML='<div style="margin-bottom:4px;">⏳ <strong>Continue monitorando</strong></div>Aderência atual: <strong>'+boardPct+'%</strong>. Aguarde atingir ≥70% sustentados por ≥3 sessões antes de substituir a versão principal.';
+    return;
+  }
+  el.className='verdict verdict-wait';
+  text.innerHTML='<div style="margin-bottom:4px;">🔍 <strong>Teste em andamento</strong></div>Versão B ativa. Acumule mais sessões (mínimo 3) para gerar veredicto confiável.';
+}
+
+function renderGamesChart(events){
+  const section = document.getElementById('games-chart');
+  if(!events.length){ section.innerHTML='<div class="events-empty">Nenhum jogo aberto ainda.</div>'; return; }
+
+  // Conta por jogo
+  const counts = {};
+  events.forEach(e=>{ counts[e.game]=(counts[e.game]||0)+1; });
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const max = sorted[0][1];
+
+  section.innerHTML = sorted.map(([game,count])=>`
+    <div class="game-bar-row">
+      <div class="game-bar-name">${GAME_NAMES[game]||game}</div>
+      <div class="game-bar-wrap">
+        <div class="game-bar-fill" style="width:${Math.round(count/max*100)}%;
+          background:${BOARD_GAMES.includes(game)?'var(--B)':'#a78bfa'};"></div>
+      </div>
+      <div class="game-bar-count">${count}</div>
+    </div>`).join('');
+}
+
+function renderTimeline(events){
+  const canvas = document.getElementById('timeline-canvas');
+  const dpr = window.devicePixelRatio||1;
+  const W = canvas.parentElement.clientWidth;
+  const H = 100;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.fillStyle='rgba(0,0,0,.3)'; ctx.fillRect(0,0,W,H);
+
+  if(!events.length){
+    ctx.fillStyle='#2a3a50'; ctx.font='12px Segoe UI';
+    ctx.textAlign='center'; ctx.fillText('Sem eventos ainda.',W/2,H/2); return;
+  }
+
+  const now = Date.now();
+  const oldest = Math.min(...events.map(e=>e.ts));
+  const span = Math.max(now - oldest, 60000); // mínimo 1 min
+
+  // Agrupa eventos por minuto para sparkline
+  const BUCKETS = Math.min(40, Math.max(5, events.length));
+  const bucketSpan = span / BUCKETS;
+  const buckets = Array(BUCKETS).fill(0);
+  events.forEach(e=>{
+    const idx = Math.min(BUCKETS-1, Math.floor((e.ts - oldest) / bucketSpan));
+    buckets[idx]++;
+  });
+  const maxB = Math.max(1, ...buckets);
+
+  // Grid
+  ctx.strokeStyle='rgba(255,255,255,.04)'; ctx.lineWidth=1;
+  [0.25,0.5,0.75,1].forEach(v=>{
+    const y=H-8-v*(H-20);
+    ctx.beginPath(); ctx.moveTo(30,y); ctx.lineTo(W-10,y); ctx.stroke();
+  });
+
+  // Linha do tempo
+  const PL=30,PR=10,PT=10,PB=20;
+  const pw=W-PL-PR, ph=H-PT-PB;
+  ctx.beginPath(); ctx.strokeStyle='var(--B)'||'#4fc3f7'; ctx.lineWidth=2; ctx.lineJoin='round';
+  buckets.forEach((v,i)=>{
+    const x=PL+(i/(BUCKETS-1))*pw;
+    const y=PT+ph-(v/maxB)*ph;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // Pontos de eventos por tipo
+  const typeColors={'choice':'#DA7756','game_open':'#4fc3f7','session_start':'#a78bfa'};
+  events.slice(-60).forEach(e=>{
+    const x=PL+((e.ts-oldest)/span)*pw;
+    const y=PT+Math.random()*(ph*.6)+ph*.2;
+    ctx.beginPath();
+    ctx.arc(x,y,3,0,Math.PI*2);
+    ctx.fillStyle=typeColors[e.type]||'#6888aa';
+    ctx.fill();
+  });
+
+  // Labels eixo X
+  ctx.fillStyle='#2a3a50'; ctx.font='9px Segoe UI'; ctx.textAlign='center';
+  const fmtTs=ts=>{ const d=new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); };
+  ctx.fillText(fmtTs(oldest),PL,H-4);
+  ctx.fillText(fmtTs(now),W-PR,H-4);
+}
+
+function renderEventLog(events){
+  const list = document.getElementById('event-list');
+  if(!events.length){ list.innerHTML='<div class="events-empty">Nenhum evento registrado.</div>'; return; }
+
+  const typeLabel={'choice':'Escolha A/B','game_open':'Jogo aberto','session_start':'Sessão iniciada'};
+  list.innerHTML = [...events].reverse().slice(0,50).map(e=>{
+    const dotCls = e.version==='B'?'ev-dot-B':e.version==='A'?'ev-dot-A':'ev-dot-N';
+    const time = new Date(e.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const date = new Date(e.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    const meta = e.game?(GAME_NAMES[e.game]||e.game):e.choice?`→ versão ${e.choice}`:`sessão #${e.session||'?'}`;
+    return `<div class="event-item">
+      <div class="ev-dot ${dotCls}"></div>
+      <div class="ev-type">${typeLabel[e.type]||e.type}</div>
+      <div class="ev-meta">${meta}</div>
+      <div class="ev-time">${date} ${time}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── AÇÕES ────────────────────────────────────────────────
+function switchTo(v){
+  localStorage.setItem(AB_KEY, v);
+  // Registra evento de troca manual
+  try{
+    const events=JSON.parse(localStorage.getItem(AB_EVENTS)||'[]');
+    events.push({type:'choice',version:v,ts:Date.now(),choice:v,prev:v==='B'?'A':'B',manual:true});
+    localStorage.setItem(AB_EVENTS,JSON.stringify(events.slice(-200)));
+  }catch(e){}
+  loadDashboard();
+}
+
+function resetAB(){
+  if(!confirm('Apagar todos os dados do teste A/B neste dispositivo?')) return;
+  ['as_ab_choice','as_ab_sessions','as_ab_events','as_ab_first_seen'].forEach(k=>localStorage.removeItem(k));
+  loadDashboard();
+}
+
+function exportData(){
+  const data={
+    choice:   localStorage.getItem(AB_KEY),
+    sessions: localStorage.getItem(AB_SESSIONS),
+    firstSeen:localStorage.getItem(AB_FIRST_SEEN),
+    events:   JSON.parse(localStorage.getItem(AB_EVENTS)||'[]'),
+    exported: new Date().toISOString(),
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='aptos-sync-ab-data.json';
+  a.click();
+}
+
+function goBack(){
+  if(window.opener) window.close();
+  else if(window.history.length>1) window.history.back();
+  else window.close();
+}
+
+// Boot
+loadDashboard();
+// Auto-refresh a cada 30s se a aba estiver visível
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden) loadDashboard();
+});
+</script>
+</body>
+</html>

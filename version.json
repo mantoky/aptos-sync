@@ -1,12 +1,12 @@
 {
-  "version": "1.1.0",
-  "date": "2026-06-10",
+  "version": "1.3.0",
+  "date": "2026-06-13",
   "changelog": [
-    "🎨 Nova identidade visual — cor terra cotta oficial",
-    "📱 Suporte a modo paisagem no celular",
-    "⌨️ Barra de espaço como gatilho no desktop",
-    "📊 Métricas aprimoradas — reação e impulso recalibrados",
-    "🎛️ Potenciômetro de duração — 25s a 61s",
-    "⚙️ Configurações: alterar senha e níveis de dificuldade"
+    "🎮 BrainHunter Pro v4 integrado — motor musical, combo e pistas",
+    "🎵 Temas sonoros: Pagode, Samba, Rock e Pop sintetizados",
+    "🔥 Sistema de combo com multiplicador de pontuação",
+    "💡 Sistema de pistas configurável por nível",
+    "📊 Score flutuante e toast de feedback",
+    "⏸ Timer pausável ao abrir configurações"
   ]
 }

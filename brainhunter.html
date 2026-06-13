@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+    <title>BrainHunter Pro: Treino Cognitivo</title>
+    <style>
+        :root {
+            --primary: #8d5b4c;
+            --secondary: #d68c76;
+            --accent: #e8b494;
+            --bg-color: #fdfbf7;
+            --card-bg: #ffffff;
+            --text-main: #5e413a;
+            --success: #7d9d62;
+            --danger: #c0392b;
+            --warning: #d99a35;
+            --cell-size: 48px;
+            --radius: 18px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .screen {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at top, #fff7ef 0%, var(--bg-color) 45%, #f6eee8 100%);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .screen.active { display: flex; }
+
+        h1 {
+            color: var(--primary);
+            font-size: clamp(2.4rem, 8vw, 4.2rem);
+            margin: 0 0 10px;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            margin-bottom: 34px;
+            opacity: 0.82;
+            font-size: 1.05rem;
+        }
+
+        .btn-large {
+            background: var(--card-bg);
+            border: 2px solid var(--secondary);
+            color: var(--primary);
+            padding: 18px 36px;
+            margin: 10px;
+            border-radius: 50px;
+            font-size: 1.08rem;
+            font-weight: 800;
+            cursor: pointer;
+            width: min(320px, 92vw);
+            transition: 0.25s ease;
+            box-shadow: 0 4px 12px rgba(141, 91, 76, 0.12);
+        }
+
+        .btn-large:hover {
+            background: var(--secondary);
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        .btn-large:active { transform: translateY(0); }
+
+        /* ---- RECORD no menu ---- */
+        .menu-record {
+            margin-top: 18px;
+            font-size: 0.92rem;
+            opacity: 0.7;
+        }
+        .menu-record strong { color: var(--primary); }
+
+        #game-ui {
+            display: none;
+            width: 100%;
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 16px 14px 28px;
+        }
+
+        .top-bar {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .top-left, .top-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .top-right { justify-content: flex-end; }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.45rem;
+            cursor: pointer;
+            color: var(--primary);
+            opacity: 0.75;
+            padding: 8px 10px;
+            border-radius: 50%;
+            transition: 0.2s;
+            line-height: 1;
+        }
+
+        .icon-btn:hover {
+            background: rgba(141,91,76,0.1);
+            opacity: 1;
+        }
+
+        /* Botão Encerrar — presença deliberada, sem drama */
+        .exit-btn {
+            background: transparent;
+            border: 1.5px solid rgba(141,91,76,0.35);
+            color: var(--primary);
+            opacity: 0.72;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            transition: 0.2s;
+            line-height: 1;
+            white-space: nowrap;
+        }
+        .exit-btn:hover {
+            background: rgba(192,57,43,0.08);
+            border-color: var(--danger);
+            color: var(--danger);
+            opacity: 1;
+        }
+
+        .hint-btn {
+            background: var(--accent);
+            border: none;
+            color: var(--primary);
+            font-weight: bold;
+            padding: 8px 14px;
+            border-radius: 40px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .hint-btn:hover:not(:disabled) {
+            background: var(--secondary);
+            color: white;
+            transform: scale(1.02);
+        }
+        .hint-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-badge {
+            background: var(--secondary);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 999px;
+            font-weight: 800;
+            white-space: nowrap;
+            font-size: 1.02rem;
+            box-shadow: 0 4px 14px rgba(214, 140, 118, 0.25);
+            justify-self: center;
+        }
+
+        .status-bar {
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(141, 91, 76, 0.09);
+            padding: 18px 18px 16px;
+            margin-bottom: 18px;
+        }
+
+        .status-level-1 {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 16px;
+            align-items: stretch;
+            margin-bottom: 14px;
+        }
+
+        .timer-box {
+            background: #faf7f4;
+            border: 1px solid #efe1dc;
+            border-radius: 18px;
+            padding: 14px 18px;
+            min-height: 114px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .timer-label {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 800;
+            opacity: 0.65;
+            margin-bottom: 4px;
+        }
+        .timer-display {
+            font-size: 4rem;
+            line-height: 1;
+            font-weight: 300;
+            color: var(--primary);
+            /* [FIX] Transição suave de cor quando o tempo esgota o alvo */
+            transition: color 0.5s;
+        }
+        .timer-display.over-target { color: var(--danger); }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(120px, 1fr));
+            gap: 12px;
+        }
+
+        .metric-card, .combo-card {
+            background: #f7f3f0;
+            border-radius: 16px;
+            padding: 12px 10px;
+            border: 1px solid #efe1dc;
+            min-height: 114px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+        }
+        .metric-label, .combo-label {
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            opacity: 0.72;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            margin-bottom: 8px;
+        }
+        .metric-value, .combo-value {
+            font-size: 2rem;
+            line-height: 1.05;
+            font-weight: 900;
+            color: var(--primary);
+        }
+        /* [FIX #1] Adicionado estilo para mode-value (antes não existia no HTML) */
+        .mode-value {
+            font-size: 1.45rem;
+            line-height: 1.05;
+            font-weight: 900;
+            color: var(--primary);
+        }
+        .combo-value {
+            color: var(--warning);
+            transition: transform 0.1s ease;
+        }
+        .combo-bonus {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        .status-level-2 {
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            gap: 16px;
+            align-items: start;
+        }
+        .find-title-box {
+            background: #faf7f4;
+            border: 1px solid #efe1dc;
+            border-radius: 16px;
+            min-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+        }
+        .find-title {
+            color: var(--secondary);
+            font-size: 1.55rem;
+            font-weight: 900;
+            margin: 0;
+        }
+
+        .words-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-content: flex-start;
+        }
+        .word-item {
+            padding: 10px 16px;
+            background: #f7f3f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 800;
+            border: 1px solid transparent;
+            min-height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .word-item.found {
+            text-decoration: line-through;
+            color: #aaa;
+            background: transparent;
+            border-color: #eadbd5;
+        }
+        /* [MELHORIA] Destaque quando a palavra ainda não foi achada */
+        .word-item:not(.found):hover {
+            border-color: var(--accent);
+            background: #fdf0e8;
+        }
+
+        .hint-text {
+            margin: 14px 4px 0;
+            font-size: 0.95rem;
+            opacity: 0.75;
+            line-height: 1.4;
+        }
+
+        .board-wrap {
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(141, 91, 76, 0.09);
+            padding: 20px;
+            width: 100%;
+            overflow: auto;
+        }
+        .board-center {
+            width: fit-content;
+            margin: 0 auto;
+        }
+        #word-grid {
+            display: grid;
+            gap: 6px;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            background: #f7f3f0;
+            border: 1px solid #ebdcd5;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 800;
+            cursor: pointer;
+            color: var(--primary);
+            transition: 0.15s ease;
+            font-size: 1.22rem;
+        }
+        .cell:hover:not(.found) { border-color: var(--secondary); }
+        /* [FIX #8] Células já encontradas não são clicáveis visualmente */
+        .cell.found { cursor: default; }
+        .cell.preview { background: var(--accent); color: white; }
+        .cell.invalid { background: #f3d5ce; color: var(--danger); }
+        .cell.found { background: var(--success); color: white; animation: pop 0.3s; }
+        .cell.hint-cell {
+            background: #ffe6b3 !important;
+            border: 3px solid #ffaa33 !important;
+            box-shadow: 0 0 6px gold;
+        }
+        /* [MELHORIA] Célula de preview âncora (primeiro clique) */
+        .cell.anchor {
+            background: var(--secondary);
+            color: white;
+            transform: scale(1.1);
+            z-index: 2;
+        }
+
+        @keyframes pop { 50% { transform: scale(1.18); } }
+
+        /* [MELHORIA] Animação de acerto com destaque de score */
+        @keyframes scoreFloat {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-40px); }
+        }
+        .score-float {
+            position: fixed;
+            font-weight: 900;
+            font-size: 1.3rem;
+            color: var(--success);
+            pointer-events: none;
+            animation: scoreFloat 1.2s ease-out forwards;
+            z-index: 5000;
+        }
+
+        .toast-message {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--warning);
+            color: var(--text-main);
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: bold;
+            z-index: 3000;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+            font-size: 1rem;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(94, 65, 58, 0.82);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+            padding: 16px;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 460px;
+            width: 100%;
+            max-height: 92vh;
+            overflow: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.22);
+        }
+        .form-group { margin: 18px 0; text-align: left; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        select, input {
+            width: 100%;
+            padding: 11px;
+            border: 2px solid #ebdcd5;
+            border-radius: 10px;
+            font-size: 1rem;
+            color: var(--text-main);
+            outline: none;
+            background: #fff;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 6px;
+        }
+        .checkbox-group label { margin-bottom: 0; cursor: pointer; }
+        .checkbox-group input { width: auto; transform: scale(1.2); margin-right: 8px; }
+        .result-score {
+            font-size: 2.4rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin: 4px 0;
+        }
+
+        /* [MELHORIA] Barra de progresso de tempo */
+        .timer-progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #efe1dc;
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .timer-progress-fill {
+            height: 100%;
+            background: var(--secondary);
+            border-radius: 2px;
+            transition: width 1s linear, background 0.5s;
+            width: 100%;
+        }
+        .timer-progress-fill.over { background: var(--danger); }
+
+        @media (max-width: 1200px) {
+            :root { --cell-size: 42px; }
+            .metrics-grid { grid-template-columns: repeat(4, minmax(120px, 1fr)); }
+        }
+        @media (max-width: 860px) {
+            :root { --cell-size: 36px; }
+            .status-level-1 { grid-template-columns: 1fr; }
+            .status-level-2 { grid-template-columns: 1fr; }
+            .find-title-box { justify-content: flex-start; padding-inline: 16px; }
+            .find-title { font-size: 1.35rem; }
+            .timer-display { font-size: 3.2rem; }
+        }
+        @media (max-width: 560px) {
+            :root { --cell-size: 30px; }
+            #game-ui { padding-inline: 10px; }
+            .status-bar { padding: 14px; }
+            .metrics-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .metric-card, .combo-card { min-height: 84px; padding: 10px 8px; }
+            .metric-value, .combo-value { font-size: 1.45rem; }
+            .mode-value { font-size: 1.1rem; }
+            .timer-box { min-height: 92px; padding: 12px; }
+            .timer-display { font-size: 2.8rem; }
+            .word-item { padding: 8px 12px; min-height: 42px; font-size: 0.92rem; }
+            .hint-text { font-size: 0.88rem; margin-top: 12px; }
+            .board-wrap { padding: 12px; }
+            .toast-message { font-size: 0.85rem; white-space: normal; width: 80%; bottom: 20px; }
+            .hint-btn { padding: 6px 10px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="menu-screen" class="screen active">
+    <h1>BrainHunter Pro</h1>
+    <p class="subtitle">Treino cognitivo progressivo com caça-palavras infinito</p>
+    <button class="btn-large" onclick="startGame()">INICIAR TREINO</button>
+    <button class="btn-large" onclick="openSettings()" style="font-size: 1rem; padding: 15px;">⚙️ Configurações</button>
+    <button class="btn-large" onclick="closeGame()" style="font-size: 0.9rem; padding: 13px; opacity: 0.65;">← Voltar ao Aptos Sync</button>
+    <!-- [MELHORIA] Recorde exibido no menu -->
+    <p class="menu-record" id="menu-record-display"></p>
+</div>
+
+<div id="game-ui">
+    <div class="top-bar">
+        <div class="top-left">
+            <button class="exit-btn" onclick="exitGame()" title="Encerrar sessão">Encerrar</button>
+            <button class="icon-btn" onclick="restartLevel()" title="Reiniciar Nível">↻</button>
+            <button id="hint-button" class="hint-btn" onclick="giveHint()" title="Pista (revela uma letra)">💡 <span id="hint-count">2</span></button>
+            <button class="icon-btn" onclick="closeGame()" title="Voltar ao Aptos Sync" style="font-size:1rem;">🏠</button>
+        </div>
+        <div class="level-badge" id="level-indicator">Nível 1</div>
+        <div class="top-right">
+            <button class="icon-btn" onclick="openSettings()" title="Configurações">⚙️</button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-level-1">
+            <div class="timer-box">
+                <div class="timer-label">Tempo</div>
+                <div class="timer-display" id="timer">00:00</div>
+                <!-- [MELHORIA] Barra de progresso visual do tempo -->
+                <div class="timer-progress-bar">
+                    <div class="timer-progress-fill" id="timer-progress-fill"></div>
+                </div>
+            </div>
+            <div class="metrics-grid">
+                <div class="metric-card"><span class="metric-label">Score total</span><span class="metric-value" id="score-total">0</span></div>
+                <div class="metric-card"><span class="metric-label">Recorde</span><span class="metric-value" id="best-score">0</span></div>
+                <div class="metric-card"><span class="metric-label">Palavras</span><span class="metric-value" id="words-progress">0/0</span></div>
+                <!-- [FIX #1] Quarta métrica corrigida — agora exibe grade e funciona (antes: mode-label inexistente) -->
+                <div class="metric-card"><span class="metric-label">Grade</span><span class="mode-value" id="mode-label">10×10</span></div>
+            </div>
+        </div>
+        <!-- [MELHORIA] Combo movido para faixa própria abaixo das métricas, não perde espaço no grid -->
+        <div style="margin: 10px 0 14px; display: flex; gap: 12px; align-items: center; justify-content: flex-end;">
+            <div id="combo-card" style="display:flex; align-items:center; gap:10px; background:#f7f3f0; border-radius:12px; padding:8px 16px; border:1px solid #efe1dc;">
+                <span style="font-size:0.76rem; font-weight:800; opacity:0.72; text-transform:uppercase; letter-spacing:0.3px;">🔥 Combo</span>
+                <span class="combo-value" id="combo-counter" style="font-size:1.6rem; font-weight:900; color:var(--warning);">0</span>
+                <span class="combo-bonus" id="combo-bonus" style="font-size:0.85rem; opacity:0.8;">x1</span>
+            </div>
+        </div>
+        <div class="status-level-2">
+            <div class="find-title-box"><h3 class="find-title">Encontre:</h3></div>
+            <div>
+                <div class="words-strip" id="word-list"></div>
+                <p class="hint-text">Clique na primeira e na última letra da palavra. Horizontal, vertical ou diagonal.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="board-wrap"><div class="board-center"><div id="word-grid"></div></div></div>
+</div>
+
+<div id="settings-modal" class="modal-overlay" onclick="closeModalByBackdrop(event, 'settings-modal')">
+    <div class="modal-content">
+        <h2 style="color: var(--primary); margin-top: 0;">Configurações</h2>
+        <div class="form-group"><label>Tempo alvo por nível (minutos)</label><input type="number" id="config-time" value="2" min="1" max="15" /></div>
+        <div class="form-group"><label>Modo / Tamanho do Grid</label><select id="config-difficulty"><option value="8">Leve (8×8)</option><option value="10" selected>Normal (10×10)</option><option value="12">Desafiador (12×12)</option><option value="14">Expert (14×14)</option></select></div>
+        <div class="form-group"><label>Tipo de evolução</label><select id="config-growth"><option value="progressive">Progressivo por nível</option><option value="fixed">Fixo pelo modo escolhido</option></select></div>
+        <!-- [MELHORIA] Configuração de pistas por nível -->
+        <div class="form-group"><label>Pistas por nível</label><select id="config-hints"><option value="1">1 pista</option><option value="2" selected>2 pistas</option><option value="3">3 pistas</option><option value="0">Sem pistas (desafio)</option></select></div>
+        <div class="form-group">
+            <label>🎵 Tema sonoro de acerto</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <select id="config-sound-theme" style="flex:1;" onchange="previewTheme(this.value)">
+                    <option value="off">🔇 Sem som</option>
+                    <option value="pagode" selected>🥁 Pagode — Mineirinho (SPC)</option>
+                    <option value="samba">🌟 Samba — Andanças (Beth Carvalho)</option>
+                    <option value="rock">🎸 Rock — Send Me an Angel (Scorpions)</option>
+                    <option value="pop">🕺 Pop — Billie Jean (Michael Jackson)</option>
+                </select>
+                <button onclick="previewTheme(document.getElementById('config-sound-theme').value)"
+                    style="background:var(--accent);border:none;border-radius:10px;padding:10px 14px;
+                           cursor:pointer;font-size:1.1rem;font-weight:800;color:var(--primary);
+                           white-space:nowrap;transition:0.2s;"
+                    title="Ouvir prévia">▶ Testar</button>
+            </div>
+            <p style="font-size:0.78rem;opacity:0.6;margin:6px 0 0;line-height:1.4;">
+                Versão sintetizada — motivo melódico da música original
+            </p>
+        </div>
+        <div class="form-group"><label>💥 Som de erro</label><div class="checkbox-group"><input type="checkbox" id="config-sound-error" checked /><label for="config-sound-error">Ativar som de erro (seleção inválida)</label></div></div>
+        <button class="btn-large" style="width: 100%; margin: 8px 0;" onclick="saveSettings()">Salvar e Fechar</button>
+    </div>
+</div>
+
+<div id="win-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 style="color: var(--success); margin-top: 0;" id="win-title">Nível Concluído! 🧠</h2>
+        <p>Tempo: <strong id="final-time" style="font-size:1.35rem;">00:00</strong></p>
+        <!-- [MELHORIA] Indicador de bônus de tempo no modal -->
+        <p id="time-bonus-msg" style="color: var(--success); font-weight: 800; display:none;"></p>
+        <p>Score do nível:</p>
+        <div class="result-score" id="level-score">0</div>
+        <p>Score acumulado: <strong id="final-score-total">0</strong></p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-large" style="flex:1;margin:4px;" onclick="closeGame()">⏹ Encerrar</button>
+            <button class="btn-large" style="flex:1;margin:4px;background:var(--secondary);color:#fff;border-color:var(--secondary);" onclick="nextLevel()">Próximo →</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============================= BANCO DE PALAVRAS =============================
+    // [FIX] Removidas duplicatas: "PLANO" e "PONTO" apareciam duas vezes
+    const wordBank = [
+        "ATENCAO", "MEMORIA", "FOCO", "MENTE", "LOGICA", "RAZAO", "IDEIA", "SAUDE",
+        "CALMA", "PAZ", "SORRISO", "AFETO", "VIVER", "SONHO", "META", "PLANO",
+        "ESTUDO", "LER", "CRIAR", "PENSAR", "AGIR", "CORAGEM", "FORCA", "FE",
+        "AMOR", "CARINHO", "LACO", "UNIAO", "GRUPO", "TIME", "APOIO", "AJUDA",
+        "DADOS", "FATO", "HOJE", "ONTEM", "TEMPO", "RELOGIO", "HORA", "MINUTO",
+        "OLHAR", "VER", "SENTIR", "TOCAR", "OUVIR", "GOSTO", "CHEIRO", "COR",
+        "FORMA", "LINHA", "PONTO", "REDE", "TEIA", "CHAVE", "PORTA", "LUZ",
+        "SOMBRA", "SOL", "LUA", "MAR", "TERRA", "AR", "FOGO", "VIDA", "ALMA",
+        "SER", "ESTAR", "SUBIR", "DESCER", "TORRE", "RADIO", "CABO", "FIBRA",
+        "SINAL", "DIRETRIZ", "RISCO", "KPI", "VALE", "NORTE", "ENERGIA",
+        "BATERIA", "ROTA", "EQUIPE", "GESTAO", "TAREFA", "ORDEM", "CHECK", "DSS",
+        "APP", "CODIGO", "SCRIPT", "SISTEMA", "DADO", "NIVEL", "VISAO",
+        // [MELHORIA] Palavras adicionais para maior variedade
+        "MAPA", "TREINO", "ALERTA", "CICLO", "FLUXO", "NEXO", "REGRA", "FASE"
+    ];
+
+    // ============================= CONFIGURAÇÕES =============================
+    const defaultConfig = {
+        time: 2,
+        gridSize: 10,
+        growth: "progressive",
+        soundTheme: "pagode",
+        soundError: true,
+        comboTimeLimit: 3,
+        maxHints: 2
+    };
+    let config = loadConfig();
+
+    // ============================= ESTADO DO JOGO =============================
+    let gameState = {
+        level: 1,
+        words: [],
+        grid: [],
+        foundCount: 0,
+        timer: 0,
+        interval: null,
+        active: false,
+        firstClick: null,
+        totalScore: 0,
+        bestScore: Number(localStorage.getItem("brainhunter_best_score") || 0),
+        currentGridSize: 10,
+        timerPaused: false,
+        combo: 0,
+        lastSuccessTime: 0,
+        comboTimeout: null,
+        hintsUsed: 0,
+        maxHints: config.maxHints
+    };
+
+    // ============================= ELEMENTOS DOM =============================
+    const els = {
+        menu:            document.getElementById("menu-screen"),
+        game:            document.getElementById("game-ui"),
+        grid:            document.getElementById("word-grid"),
+        list:            document.getElementById("word-list"),
+        timer:           document.getElementById("timer"),
+        timerFill:       document.getElementById("timer-progress-fill"),
+        badge:           document.getElementById("level-indicator"),
+        settings:        document.getElementById("settings-modal"),
+        win:             document.getElementById("win-modal"),
+        winTitle:        document.getElementById("win-title"),
+        finalTime:       document.getElementById("final-time"),
+        timeBonusMsg:    document.getElementById("time-bonus-msg"),
+        scoreTotal:      document.getElementById("score-total"),
+        bestScore:       document.getElementById("best-score"),
+        wordsProgress:   document.getElementById("words-progress"),
+        modeLabel:       document.getElementById("mode-label"),   // [FIX #1] Agora existe no HTML
+        levelScore:      document.getElementById("level-score"),
+        finalScoreTotal: document.getElementById("final-score-total"),
+        comboCounter:    document.getElementById("combo-counter"),
+        comboBonus:      document.getElementById("combo-bonus"),
+        comboCard:       document.getElementById("combo-card"),
+        hintButton:      document.getElementById("hint-button"),
+        hintCountSpan:   document.getElementById("hint-count"),
+        menuRecord:      document.getElementById("menu-record-display")
+    };
+
+    // ============================= UTILITÁRIOS =============================
+    function normalizeWord(word) {
+        return word.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Z]/gi, "").toUpperCase();
+    }
+
+    function shuffle(arr) {
+        return [...arr].sort(() => Math.random() - 0.5);
+    }
+
+    function formatTime(sec) {
+        let m = Math.floor(sec / 60).toString().padStart(2, "0");
+        let s = (sec % 60).toString().padStart(2, "0");
+        return `${m}:${s}`;
+    }
+
+    function updateMenuRecord() {
+        if (gameState.bestScore > 0 && els.menuRecord) {
+            els.menuRecord.innerHTML = `🏆 Recorde: <strong>${gameState.bestScore.toLocaleString("pt-BR")}</strong> pts`;
+        }
+    }
+
+    // ============================= TOAST =============================
+    let toastTimeout = null;
+    function showToast(msg, duration = 1500) {
+        let toast = document.getElementById('global-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'global-toast';
+            toast.className = 'toast-message';
+            document.body.appendChild(toast);
+        }
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toast.innerText = msg;
+        toast.style.opacity = '1';
+        toastTimeout = setTimeout(() => { toast.style.opacity = '0'; }, duration);
+    }
+
+    // ============================= SCORE FLOAT =============================
+    // [MELHORIA] Animação de pontos flutuantes ao acertar uma palavra
+    function spawnScoreFloat(points, combo, cellElement) {
+        if (!cellElement) return;
+        const rect = cellElement.getBoundingClientRect();
+        const el = document.createElement('div');
+        el.className = 'score-float';
+        el.innerText = combo > 1 ? `+${points} 🔥x${combo}` : `+${points}`;
+        el.style.left = `${rect.left + rect.width / 2}px`;
+        el.style.top  = `${rect.top - 10}px`;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1300);
+    }
+
+    // ============================= MOTOR MUSICAL =============================
+    // Motivos melódicos sintetizados — evocam os riffs originais via Web Audio API
+    //
+    // Cada tema: array de { f: frequência Hz, d: duração s, v: volume, t: delay s }
+    // Timbres: "triangle"=cavaquinho  "sine"=voz/flauta  "sawtooth"=guitarra  "square"=synth bass
+    //
+    // PAGODE  — "Mineirinho" SPC: galope de cavaquinho em Lá menor (A4-G4-E4-A4-E5)
+    // SAMBA   — "Andanças" Beth:  frase descendente do refrão (E5-D5-C5-B4-A4)
+    // ROCK    — "Send Me an Angel" Scorpions: arpejo mi menor ascendente (E4-B4-E5-G5)
+    // POP     — "Billie Jean" MJ:  baixo sincopado transposto (F#3-F#3-A3-B3)
+
+    const THEMES = {
+        pagode: {
+            type: "triangle",
+            notes: [
+                { f: 440.00, d: 0.09, v: 0.28, t: 0.000 },  // A4
+                { f: 392.00, d: 0.09, v: 0.22, t: 0.100 },  // G4
+                { f: 329.63, d: 0.09, v: 0.22, t: 0.200 },  // E4
+                { f: 440.00, d: 0.09, v: 0.26, t: 0.300 },  // A4
+                { f: 659.25, d: 0.16, v: 0.30, t: 0.410 },  // E5 — nota de chegada
+            ]
+        },
+        samba: {
+            type: "sine",
+            notes: [
+                { f: 659.25, d: 0.14, v: 0.26, t: 0.000 },  // E5
+                { f: 587.33, d: 0.12, v: 0.24, t: 0.150 },  // D5
+                { f: 523.25, d: 0.12, v: 0.24, t: 0.280 },  // C5
+                { f: 493.88, d: 0.12, v: 0.22, t: 0.400 },  // B4
+                { f: 440.00, d: 0.22, v: 0.28, t: 0.520 },  // A4 — resolve
+            ]
+        },
+        rock: {
+            type: "sawtooth",
+            notes: [
+                { f: 329.63, d: 0.13, v: 0.18, t: 0.000 },  // E4
+                { f: 493.88, d: 0.13, v: 0.18, t: 0.140 },  // B4
+                { f: 659.25, d: 0.13, v: 0.20, t: 0.280 },  // E5
+                { f: 783.99, d: 0.22, v: 0.22, t: 0.420 },  // G5 — pico
+            ]
+        },
+        pop: {
+            type: "square",
+            notes: [
+                { f: 185.00, d: 0.13, v: 0.22, t: 0.000 },  // F#3
+                { f: 185.00, d: 0.08, v: 0.18, t: 0.150 },  // F#3 (síncope)
+                { f: 220.00, d: 0.13, v: 0.22, t: 0.240 },  // A3
+                { f: 246.94, d: 0.20, v: 0.26, t: 0.380 },  // B3 — groove
+            ]
+        }
+    };
+
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx && (window.AudioContext || window.webkitAudioContext))
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    // Toca uma nota individual com envelope ADSR simplificado
+    function playNote(freq, dur, vol, delayS, oscType) {
+        try {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const start = audioCtx.currentTime + delayS;
+            const osc   = audioCtx.createOscillator();
+            const gain  = audioCtx.createGain();
+
+            // Filtro passa-baixa para suavizar sawtooth e square
+            const filter = audioCtx.createBiquadFilter();
+            filter.type            = "lowpass";
+            filter.frequency.value = oscType === "sawtooth" ? 2200
+                                   : oscType === "square"   ? 900
+                                   : 8000;
+            filter.Q.value = 0.8;
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.type            = oscType;
+            osc.frequency.value = freq;
+
+            // Envelope: attack 8ms → sustain → release 60ms
+            gain.gain.setValueAtTime(0, start);
+            gain.gain.linearRampToValueAtTime(vol, start + 0.008);
+            gain.gain.setValueAtTime(vol, start + dur - 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.0001, start + dur + 0.06);
+
+            osc.start(start);
+            osc.stop(start + dur + 0.08);
+        } catch(e) { /* silencioso */ }
+    }
+
+    // Toca o motivo completo do tema selecionado
+    function playSuccess() {
+        if (config.soundTheme === "off") return;
+        initAudio();
+        const theme = THEMES[config.soundTheme];
+        if (!theme) return;
+        for (const n of theme.notes)
+            playNote(n.f, n.d, n.v, n.t, theme.type);
+    }
+
+    // Som de erro — grave curto, independente do tema
+    function playError() {
+        if (!config.soundError) return;
+        initAudio();
+        if (!audioCtx) return;
+        playNote(180, 0.18, 0.18, 0, "sine");
+        playNote(140, 0.22, 0.14, 0.12, "sine");
+    }
+
+    // Prévia do tema — chamada pelo botão "Testar" nas configurações
+    function previewTheme(themeKey) {
+        if (themeKey === "off") return;
+        initAudio();
+        const theme = THEMES[themeKey];
+        if (!theme) return;
+        for (const n of theme.notes)
+            playNote(n.f, n.d, n.v + 0.05, n.t, theme.type);
+    }
+
+    // ============================= COMBO =============================
+    function updateComboUI() {
+        if (!els.comboCounter) return;
+        els.comboCounter.innerText = gameState.combo;
+        let mult = Math.min(gameState.combo + 1, 5);
+        els.comboBonus.innerText = `x${mult}`;
+        if (gameState.combo > 0) {
+            els.comboCard.style.backgroundColor = "#fff0e0";
+            els.comboCounter.style.transform = "scale(1.05)";
+            setTimeout(() => { if (els.comboCounter) els.comboCounter.style.transform = ""; }, 150);
+        } else {
+            els.comboCard.style.backgroundColor = "";
+        }
+    }
+
+    function incrementCombo() {
+        if (gameState.comboTimeout) clearTimeout(gameState.comboTimeout);
+        let now = Date.now() / 1000;
+        if (gameState.lastSuccessTime && (now - gameState.lastSuccessTime) > config.comboTimeLimit)
+            gameState.combo = 0;
+        gameState.combo++;
+        gameState.lastSuccessTime = now;
+        gameState.comboTimeout = setTimeout(() => {
+            if (gameState.active) { gameState.combo = 0; updateComboUI(); }
+        }, config.comboTimeLimit * 1000);
+        updateComboUI();
+    }
+
+    function breakCombo() {
+        if (gameState.combo > 0) {
+            gameState.combo = 0;
+            if (gameState.comboTimeout) clearTimeout(gameState.comboTimeout);
+            updateComboUI();
+            els.comboCard.style.backgroundColor = "#ffe0e0";
+            setTimeout(() => { if (els.comboCard) els.comboCard.style.backgroundColor = ""; }, 300);
+        }
+    }
+
+    // ============================= PONTUAÇÃO =============================
+    function addPointsForWord(pathCells) {
+        let base = 100;
+        let mult = Math.min(gameState.combo + 1, 5);
+        let bonus = base * (mult - 1);
+        let total = base + bonus;
+        gameState.totalScore += total;
+        updateMetrics();
+        // Exibe flutuador na primeira célula do caminho
+        let anchorCell = pathCells && pathCells[0]
+            ? els.grid.children[pathCells[0].r * gameState.currentGridSize + pathCells[0].c]
+            : null;
+        spawnScoreFloat(total, gameState.combo, anchorCell);
+        if (bonus > 0) showToast(`+${bonus} bônus combo x${mult}!`, 900);
+    }
+
+    // ============================= PISTAS =============================
+    function updateHintUI() {
+        let left = gameState.maxHints - gameState.hintsUsed;
+        els.hintCountSpan.innerText = left;
+        els.hintButton.disabled = (
+            left <= 0 ||
+            !gameState.active ||
+            gameState.foundCount === gameState.words.length
+        );
+    }
+
+    function giveHint() {
+        if (!gameState.active) return showToast("Jogo não ativo.", 1200);
+        if (gameState.hintsUsed >= gameState.maxHints) return showToast("Sem pistas restantes!", 1200);
+        let notFound = gameState.words.filter(w => !w.found);
+        if (!notFound.length) return showToast("Todas já foram encontradas!", 1200);
+        let chosen = notFound[Math.floor(Math.random() * notFound.length)];
+        let path = chosen.path;
+        if (!path.length) return;
+        let idx = Math.floor(Math.random() * path.length);
+        let { r, c } = path[idx];
+        let letter = gameState.grid[r][c];
+        let cellDiv = els.grid.children[r * gameState.currentGridSize + c];
+        if (cellDiv) {
+            cellDiv.classList.add("hint-cell");
+            setTimeout(() => cellDiv.classList.remove("hint-cell"), 2200);
+        }
+        showToast(`Pista: "${chosen.word}" → letra "${letter}" na posição (${r+1},${c+1})`, 2500);
+        gameState.hintsUsed++;
+        updateHintUI();
+    }
+
+    // ============================= TIMER =============================
+    function pauseTimer() {
+        if (gameState.interval && !gameState.timerPaused && gameState.active) {
+            clearInterval(gameState.interval);
+            gameState.interval = null;
+            gameState.timerPaused = true;
+        }
+    }
+
+    function resumeTimer() {
+        if (gameState.timerPaused && gameState.active && !gameState.interval) {
+            gameState.interval = setInterval(tickTimer, 1000);
+            gameState.timerPaused = false;
+        }
+    }
+
+    function tickTimer() {
+        if (!gameState.timerPaused && gameState.active) {
+            gameState.timer++;
+            els.timer.innerText = formatTime(gameState.timer);
+            updateTimerProgress();
+        }
+    }
+
+    // [MELHORIA] Barra de progresso e cor do timer quando ultrapassa o alvo
+    function updateTimerProgress() {
+        let target = config.time * 60;
+        if (gameState.timer <= target) {
+            let pct = ((target - gameState.timer) / target) * 100;
+            els.timerFill.style.width = pct + "%";
+            els.timerFill.classList.remove("over");
+            els.timer.classList.remove("over-target");
+        } else {
+            els.timerFill.style.width = "0%";
+            els.timerFill.classList.add("over");
+            els.timer.classList.add("over-target");
+        }
+    }
+
+    // ============================= CONFIGURAÇÕES (PERSISTÊNCIA) =============================
+    function loadConfig() {
+        try {
+            let saved = JSON.parse(localStorage.getItem("brainhunter_config"));
+            return { ...defaultConfig, ...saved };
+        } catch { return { ...defaultConfig }; }
+    }
+
+    function persistConfig() {
+        localStorage.setItem("brainhunter_config", JSON.stringify(config));
+    }
+
+    // ============================= LÓGICA DE NÍVEL E GRID =============================
+    function getLevelSettings() {
+        let base = config.gridSize;
+        let size = base;
+        if (config.growth === "progressive") {
+            if (gameState.level >= 4  && base < 10) size = 10;
+            if (gameState.level >= 8  && base < 12) size = 12;
+            if (gameState.level >= 12 && base < 14) size = 14;
+        }
+        const maxWords  = { 8:6, 10:7, 12:9, 14:11 };
+        const baseWords = { 8:4, 10:5, 12:6, 14:7  };
+        let wordCount = Math.min(maxWords[size], baseWords[size] + Math.floor((gameState.level - 1) / 2));
+        let dirStage  = gameState.level < 3 ? "easy" : (gameState.level < 7 ? "medium" : "hard");
+        return { size, wordCount, dirStage };
+    }
+
+    function getDirections(stage) {
+        if (stage === "easy")   return [[0,1],[1,0]];
+        if (stage === "medium") return [[0,1],[1,0],[1,1],[-1,1]];
+        return [[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]];
+    }
+
+    function canPlace(word, r, c, dir, size) {
+        for (let i = 0; i < word.length; i++) {
+            let nr = r + i*dir[0], nc = c + i*dir[1];
+            if (nr < 0 || nr >= size || nc < 0 || nc >= size) return false;
+            if (gameState.grid[nr][nc] !== "" && gameState.grid[nr][nc] !== word[i]) return false;
+        }
+        return true;
+    }
+
+    function placeWord(word, size, dirs) {
+        for (let attempt = 0; attempt < 240; attempt++) {
+            let dir = dirs[Math.floor(Math.random() * dirs.length)];
+            let r = Math.floor(Math.random() * size);
+            let c = Math.floor(Math.random() * size);
+            if (canPlace(word, r, c, dir, size)) {
+                let path = [];
+                for (let i = 0; i < word.length; i++) {
+                    let nr = r + i*dir[0], nc = c + i*dir[1];
+                    gameState.grid[nr][nc] = word[i];
+                    path.push({ r: nr, c: nc });
+                }
+                return path;
+            }
+        }
+        return null;
+    }
+
+    function generateGrid(size, words, dirStage) {
+        gameState.grid  = Array(size).fill(null).map(() => Array(size).fill(""));
+        gameState.words = [];
+        let dirs = getDirections(dirStage);
+        for (let w of words) {
+            let path = placeWord(w, size, dirs);
+            if (path) gameState.words.push({ word: w, found: false, path });
+        }
+        // Complementar se palavras não couberam
+        let candidates = [...new Set(wordBank.map(normalizeWord))]
+            .filter(w => w.length >= 2 && w.length <= size && !gameState.words.some(item => item.word === w));
+        let safety = 0;
+        while (gameState.words.length < words.length && safety < candidates.length) {
+            let cand = candidates[safety++];
+            let path = placeWord(cand, size, dirs);
+            if (path) gameState.words.push({ word: cand, found: false, path });
+        }
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        for (let r = 0; r < size; r++)
+            for (let c = 0; c < size; c++)
+                if (gameState.grid[r][c] === "")
+                    gameState.grid[r][c] = letters[Math.floor(Math.random() * letters.length)];
+    }
+
+    // ============================= RENDERIZAÇÃO =============================
+    function renderUI() {
+        els.grid.innerHTML = "";
+        els.list.innerHTML = "";
+        let size = gameState.currentGridSize;
+        els.grid.style.gridTemplateColumns = `repeat(${size}, var(--cell-size))`;
+        for (let r = 0; r < size; r++) {
+            for (let c = 0; c < size; c++) {
+                let cell = document.createElement("div");
+                cell.className = "cell";
+                cell.innerText = gameState.grid[r][c];
+                cell.dataset.r = r;
+                cell.dataset.c = c;
+                cell.addEventListener("click", () => handleCell(r, c));
+                els.grid.appendChild(cell);
+            }
+        }
+        for (let w of gameState.words) {
+            let item = document.createElement("div");
+            item.className = "word-item";
+            item.id = `w-${w.word}`;
+            item.innerText = w.word;
+            els.list.appendChild(item);
+        }
+        updateMetrics();
+        updateHintUI();
+        updateTimerProgress();
+    }
+
+    function updateMetrics() {
+        if (els.scoreTotal)    els.scoreTotal.innerText    = gameState.totalScore.toLocaleString("pt-BR");
+        if (els.bestScore)     els.bestScore.innerText     = gameState.bestScore.toLocaleString("pt-BR");
+        if (els.wordsProgress) els.wordsProgress.innerText = `${gameState.foundCount}/${gameState.words.length}`;
+        // [FIX #1] modeLabel agora existe e é atualizado corretamente
+        if (els.modeLabel)     els.modeLabel.innerText     = `${gameState.currentGridSize}×${gameState.currentGridSize}`;
+    }
+
+    // ============================= VERIFICAÇÃO DE PALAVRA =============================
+    function checkMatchStatus(start, end) {
+        let dr = end.r - start.r, dc = end.c - start.c;
+        if (!(dr === 0 || dc === 0 || Math.abs(dr) === Math.abs(dc))) return 'invalid';
+        let steps = Math.max(Math.abs(dr), Math.abs(dc));
+        if (steps === 0) return 'invalid';
+        let stepR = Math.sign(dr), stepC = Math.sign(dc);
+        let word = "", path = [];
+        for (let i = 0; i <= steps; i++) {
+            let cr = start.r + i*stepR, cc = start.c + i*stepC;
+            if (cr < 0 || cr >= gameState.currentGridSize || cc < 0 || cc >= gameState.currentGridSize)
+                return 'invalid';
+            word += gameState.grid[cr][cc];
+            path.push({ r: cr, c: cc });
+        }
+        let rev   = word.split('').reverse().join('');
+        // [FIX #3] Verifica se a seleção bate com palavra já encontrada (retorna status próprio)
+        let alreadyMatch = gameState.words.find(w => (w.word === word || w.word === rev) && w.found);
+        if (alreadyMatch) return 'already_found';
+        let match = gameState.words.find(w => (w.word === word || w.word === rev) && !w.found);
+        if (!match) return 'invalid';
+        return { success: true, match, path };
+    }
+
+    function handleCell(r, c) {
+        if (!gameState.active) return;
+
+        // [FIX #8] Células já encontradas (verdes) não servem como ponto de início
+        let idx  = r * gameState.currentGridSize + c;
+        let cell = els.grid.children[idx];
+        if (!cell) return;
+
+        if (!gameState.firstClick) {
+            // Não deixa iniciar numa célula já encontrada
+            if (cell.classList.contains("found")) return;
+            gameState.firstClick = { r, c };
+            // [FIX] Usa classe 'anchor' para primeiro clique, não 'preview'
+            cell.classList.add("preview", "anchor");
+            return;
+        }
+
+        // Segundo clique no mesmo lugar: cancela
+        if (gameState.firstClick.r === r && gameState.firstClick.c === c) {
+            cell.classList.remove("preview", "anchor");
+            gameState.firstClick = null;
+            return;
+        }
+
+        let status = checkMatchStatus(gameState.firstClick, { r, c });
+
+        // Remove estado visual do primeiro clique
+        let firstIdx  = gameState.firstClick.r * gameState.currentGridSize + gameState.firstClick.c;
+        let firstCell = els.grid.children[firstIdx];
+        if (firstCell) firstCell.classList.remove("preview", "anchor");
+
+        // [FIX #3] Palavra já encontrada — não penaliza, apenas informa
+        if (status === 'already_found') {
+            showToast("Palavra já encontrada! ✓", 1000);
+            gameState.firstClick = null;
+            return;
+        }
+
+        if (status === 'invalid') {
+            playError();
+            breakCombo();
+            cell.classList.add("invalid");
+            setTimeout(() => cell.classList.remove("invalid"), 220);
+        } else if (status.success) {
+            playSuccess();
+            let match = status.match;
+            match.found = true;
+            let wordEl = document.getElementById(`w-${match.word}`);
+            if (wordEl) wordEl.classList.add("found");
+            for (let p of status.path) {
+                let ci   = p.r * gameState.currentGridSize + p.c;
+                let cc   = els.grid.children[ci];
+                if (cc) cc.classList.add("found");
+            }
+            gameState.foundCount++;
+            incrementCombo();
+            addPointsForWord(status.path);
+            updateHintUI();
+            if (gameState.foundCount === gameState.words.length) finishLevel();
+        }
+
+        gameState.firstClick = null;
+    }
+
+    // ============================= FINALIZAÇÃO E PROGRESSÃO =============================
+    function calculateLevelScore() {
+        let mult       = { 8:0.9, 10:1.0, 12:1.25, 14:1.55 }[gameState.currentGridSize] || 1;
+        let target     = config.time * 60;
+        let base       = 500 + (gameState.level * 120) + (gameState.words.length * 80);
+        let speedBonus = Math.max(0, target - gameState.timer) * 8;
+        let timePenalty= Math.max(0, gameState.timer - target) * 3;
+        return Math.max(100, Math.round((base + speedBonus - timePenalty) * mult));
+    }
+
+    function finishLevel() {
+        gameState.active = false;
+        if (gameState.interval)     clearInterval(gameState.interval);
+        if (gameState.comboTimeout) clearTimeout(gameState.comboTimeout);
+        gameState.interval = null;
+
+        let levelScore = calculateLevelScore();
+        gameState.totalScore += levelScore;
+
+        let isNewRecord = gameState.totalScore > gameState.bestScore;
+        if (isNewRecord) {
+            gameState.bestScore = gameState.totalScore;
+            localStorage.setItem("brainhunter_best_score", String(gameState.bestScore));
+        }
+
+        // [MELHORIA] Modal de vitória com mensagem de bônus de tempo
+        let target     = config.time * 60;
+        let speedBonus = Math.max(0, target - gameState.timer) * 8;
+        els.winTitle.innerText = isNewRecord
+            ? "🏆 Novo Recorde! Incrível!"
+            : "Nível Concluído! 🧠";
+        els.winTitle.style.color = isNewRecord ? "var(--warning)" : "var(--success)";
+
+        if (speedBonus > 0) {
+            els.timeBonusMsg.style.display = "block";
+            els.timeBonusMsg.innerText = `⚡ Bônus de velocidade: +${speedBonus.toLocaleString("pt-BR")} pts`;
+        } else {
+            els.timeBonusMsg.style.display = "none";
+        }
+
+        els.finalTime.innerText       = els.timer.innerText;
+        els.levelScore.innerText      = levelScore.toLocaleString("pt-BR");
+        els.finalScoreTotal.innerText = gameState.totalScore.toLocaleString("pt-BR");
+        updateMetrics();
+        updateMenuRecord();
+        els.win.style.display = "flex";
+    }
+
+    function nextLevel() {
+        gameState.level++;
+        loadLevel();
+    }
+
+    function loadLevel() {
+        if (gameState.interval)     clearInterval(gameState.interval);
+        if (gameState.comboTimeout) clearTimeout(gameState.comboTimeout);
+
+        gameState.active          = true;
+        gameState.foundCount      = 0;
+        gameState.timer           = 0;
+        gameState.firstClick      = null;
+        gameState.timerPaused     = false;
+        gameState.combo           = 0;
+        gameState.lastSuccessTime = 0;
+        gameState.hintsUsed       = 0;
+        gameState.maxHints        = config.maxHints;
+
+        updateComboUI();
+
+        let settings = getLevelSettings();
+        gameState.currentGridSize = settings.size;
+
+        els.badge.innerText   = `Nível ${gameState.level}`;
+        els.win.style.display = "none";
+        els.timer.innerText   = "00:00";
+        els.timer.classList.remove("over-target");
+
+        // Seleção de palavras únicas
+        let unique    = [...new Set(wordBank.map(normalizeWord))];
+        let available = unique.filter(w => w.length >= 2 && w.length <= settings.size);
+        let selectedSet  = new Set();
+        let shuffled  = shuffle(available);
+        for (let i = 0; i < shuffled.length && selectedSet.size < settings.wordCount; i++)
+            selectedSet.add(shuffled[i]);
+        let selected = Array.from(selectedSet);
+        if (selected.length < settings.wordCount) {
+            let extra = shuffle(unique.filter(w => !selectedSet.has(w) && w.length >= 2 && w.length <= settings.size));
+            for (let i = 0; i < extra.length && selected.length < settings.wordCount; i++)
+                selected.push(extra[i]);
+        }
+
+        generateGrid(settings.size, selected, settings.dirStage);
+        renderUI();
+
+        gameState.interval = setInterval(tickTimer, 1000);
+    }
+
+    // ============================= AÇÕES DA INTERFACE =============================
+    async function startGame() {
+        try {
+            let elem = document.documentElement;
+            if (elem.requestFullscreen)           await elem.requestFullscreen();
+            else if (elem.webkitRequestFullscreen) await elem.webkitRequestFullscreen();
+        } catch(e) { /* fullscreen não permitido em todos os ambientes */ }
+        els.menu.classList.remove("active");
+        els.game.style.display = "block";
+        gameState.level      = 1;
+        gameState.totalScore = 0;
+        loadLevel();
+    }
+
+    // Encerrar: decisão soberana do jogador — sem interrupção de confirm
+    function exitGame() {
+        if (gameState.interval)     clearInterval(gameState.interval);
+        if (gameState.comboTimeout) clearTimeout(gameState.comboTimeout);
+        gameState.active = false;
+        try {
+            if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
+        } catch(e) {}
+        els.game.style.display = "none";
+        els.win.style.display  = "none";
+        els.menu.classList.add("active");
+        updateMenuRecord();
+    }
+
+    // Reiniciar nível: soberania sobre o próprio desempenho — sem confirm
+    function restartLevel() {
+        loadLevel();
+    }
+
+    function openSettings() {
+        els.settings.style.display = "flex";
+        document.getElementById("config-time").value            = config.time;
+        document.getElementById("config-difficulty").value      = config.gridSize;
+        document.getElementById("config-growth").value          = config.growth;
+        document.getElementById("config-hints").value           = config.maxHints;
+        document.getElementById("config-sound-theme").value     = config.soundTheme;
+        document.getElementById("config-sound-error").checked   = config.soundError;
+        pauseTimer();
+    }
+
+    function closeModalByBackdrop(event, modalId) {
+        if (event.target.id !== modalId) return;
+        event.target.style.display = "none";
+        if (modalId === "settings-modal" && gameState.active && gameState.timerPaused)
+            resumeTimer();
+    }
+
+    function saveSettings() {
+        config.time         = Math.min(Math.max(parseInt(document.getElementById("config-time").value), 1), 15);
+        config.gridSize     = parseInt(document.getElementById("config-difficulty").value);
+        config.growth       = document.getElementById("config-growth").value;
+        config.maxHints     = parseInt(document.getElementById("config-hints").value);
+        config.soundTheme   = document.getElementById("config-sound-theme").value;
+        config.soundError   = document.getElementById("config-sound-error").checked;
+        persistConfig();
+        els.settings.style.display = "none";
+        if (gameState.active) {
+            loadLevel();
+        } else {
+            gameState.timerPaused = false;
+        }
+    }
+
+    // ============================= TECLADO =============================
+    window.addEventListener("keydown", e => {
+        if (e.key === "Escape") {
+            if (els.settings.style.display === "flex") {
+                els.settings.style.display = "none";
+                if (gameState.active && gameState.timerPaused) resumeTimer();
+            } else if (gameState.active && els.game.style.display !== "none") {
+                exitGame();
+            }
+        }
+        if (e.key === "h" || e.key === "H") {
+            if (gameState.active && !els.hintButton.disabled) giveHint();
+        }
+    });
+
+    // ============================= VOLTAR AO APTOS SYNC =============================
+    // Fecha o iframe e retorna ao Aptos Sync via postMessage
+    function closeGame() {
+        if (gameState.interval)     clearInterval(gameState.interval);
+        if (gameState.comboTimeout) clearTimeout(gameState.comboTimeout);
+        gameState.active = false;
+        try { if (document.exitFullscreen) document.exitFullscreen(); } catch(e) {}
+        // Se estiver dentro de um iframe, avisa o pai para fechar
+        if (window.parent !== window) {
+            window.parent.postMessage({ type: 'BRAINHUNTER_CLOSE' }, '*');
+        }
+    }
+
+    // ============================= INIT =============================
+    updateMetrics();
+    updateHintUI();
+    updateMenuRecord();
+</script>
+</body>
+</html>

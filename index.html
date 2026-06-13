@@ -248,6 +248,57 @@ button.icon-btn:hover{background:rgba(218,119,86,0.1);border-color:rgba(218,119,
   transition:color 0.15s,border-color 0.15s;
 }
 .update-btn-later:hover{color:#6888aa;border-color:rgba(255,255,255,0.2);}
+/* ── GAMES OVERLAY ── */
+#games-overlay{
+  position:fixed;inset:0;z-index:9000;
+  background:#060818;
+  display:none;flex-direction:column;
+}
+#games-overlay.open{display:flex;}
+#games-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;background:#0a0f1e;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  flex-shrink:0;
+}
+#games-bar .game-title{
+  font-size:.85rem;font-weight:700;letter-spacing:1px;
+  color:#DA7756;text-transform:uppercase;
+}
+#games-bar .close-btn{
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+  color:#888;font-size:.85rem;padding:6px 14px;border-radius:8px;
+  cursor:pointer;transition:all .15s;font-weight:600;
+}
+#games-bar .close-btn:hover{background:rgba(218,119,86,.15);color:#DA7756;border-color:rgba(218,119,86,.3);}
+#games-frame{flex:1;border:none;width:100%;background:#060818;}
+
+/* ── GAMES HUB (tela de seleção) ── */
+#games-hub{
+  display:none;
+  flex:1;flex-direction:column;
+  justify-content:center;align-items:center;
+  padding:24px;text-align:center;
+}
+#games-hub.open{display:flex;}
+#games-hub h2{color:#c8d8f0;font-size:1.1rem;margin-bottom:20px;letter-spacing:.5px;}
+.game-card{
+  width:100%;max-width:320px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:16px;padding:20px;
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;gap:16px;
+  text-align:left;margin-bottom:12px;
+}
+.game-card:hover{
+  background:rgba(218,119,86,.08);
+  border-color:rgba(218,119,86,.3);
+  transform:translateY(-2px);
+}
+.game-card .gc-icon{font-size:2.2rem;flex-shrink:0;}
+.game-card .gc-name{font-size:1rem;font-weight:700;color:#c8d8f0;margin-bottom:3px;}
+.game-card .gc-desc{font-size:.75rem;color:#4a6080;line-height:1.4;}
 @media(min-width:600px){.screen-inner{max-width:440px;}}
 /* Landscape mobile */
 @media(max-height:500px) and (orientation:landscape){
@@ -325,6 +376,7 @@ button.icon-btn:hover{background:rgba(218,119,86,0.1);border-color:rgba(218,119,
         <div class="btn-row" style="margin-top:0;">
           <button class="sec-btn" onclick="showHistory()">📋 Histórico</button>
           <button class="sec-btn" onclick="showChart()">📈 Evolução</button>
+          <button class="sec-btn" onclick="openGames()">🎮 Jogos</button>
           <button class="sec-btn" onclick="doLogout()">Sair</button>
         </div>
       </div>
@@ -470,6 +522,27 @@ button.icon-btn:hover{background:rgba(218,119,86,0.1);border-color:rgba(218,119,
   </div>
 </div>
 
+<!-- GAMES OVERLAY -->
+<div id="games-overlay">
+  <div id="games-bar">
+    <span class="game-title" id="games-bar-title">🎮 Jogos</span>
+    <button class="close-btn" onclick="closeGames()">✕ Fechar</button>
+  </div>
+  <!-- Hub de seleção de jogos -->
+  <div id="games-hub" class="open">
+    <h2>Escolha um jogo</h2>
+    <div class="game-card" onclick="launchGame('brainhunter.html','🧩 BrainHunter Pro')">
+      <span class="gc-icon">🧩</span>
+      <div>
+        <div class="gc-name">BrainHunter Pro</div>
+        <div class="gc-desc">Caça-palavras cognitivo com níveis progressivos, modo contrarrelógio e categorias temáticas.</div>
+      </div>
+    </div>
+  </div>
+  <!-- iframe do jogo selecionado -->
+  <iframe id="games-frame" src="" allow="fullscreen" style="display:none;"></iframe>
+</div>
+
 <!-- JOGO -->
 <div id="game-area">
   <div id="hud">Tempo: <span id="timer">45</span>s</div>
@@ -499,10 +572,10 @@ button.icon-btn:hover{background:rgba(218,119,86,0.1);border-color:rgba(218,119,
 
 /* ══════ CONSTANTES ══════ */
 const DIFF_LEVELS=[
-  {name:'FÁCIL',   desc:'Para começar',      minI:Math.round(784*1.15),maxI:Math.round(1764*1.15)},
-  {name:'MÉDIO',   desc:'Velocidade padrão', minI:784, maxI:1764},
-  {name:'DIFÍCIL', desc:'Atenção redobrada', minI:Math.round(784*0.80),maxI:Math.round(1764*0.80)},
-  {name:'EXPERTO', desc:'Máxima exigência',  minI:Math.round(784*0.70),maxI:Math.round(1764*0.70)},
+  {name:'FÁCIL',   desc:'Para começar',      minI:Math.round(784*1.15),  maxI:Math.round(1764*1.15)},
+  {name:'MÉDIO',   desc:'Velocidade padrão', minI:Math.round(784*0.97),  maxI:Math.round(1764*0.97)},
+  {name:'DIFÍCIL', desc:'Atenção redobrada', minI:Math.round(784*0.768), maxI:Math.round(1764*0.768)},
+  {name:'EXPERTO', desc:'Máxima exigência',  minI:Math.round(784*0.665), maxI:Math.round(1764*0.665)},
 ];
 // Tempo: 25s a 60s, step 2s → 19 posições (índices 0..18)
 const TIME_MIN=25,TIME_MAX=61,TIME_STEP=2;
@@ -879,9 +952,10 @@ function calculateMetrics(){
   let avgReaction=0,reactionScore=0;
   if(reactionTimes.length>0){avgReaction=reactionTimes.reduce((a,b)=>a+b,0)/reactionTimes.length;reactionScore=Math.min(100,Math.max(0,100-((avgReaction-350)/5)));}
   const attentionScore=totalTargetsShown>0?(score/totalTargetsShown)*100:0;
-  const totalStimuli=totalTargetsShown+(errorsImpulse>0?errorsImpulse:0);
-  const impulseScore=totalStimuli>0?Math.max(0,100-(errorsImpulse/totalStimuli)*100):100;
-  const concentrationScore=attentionScore*0.35+impulseScore*0.40+reactionScore*0.25;
+  const totalStimuli=totalTargetsShown+errorsImpulse;
+  const hasActivity=score>0||errorsImpulse>0;
+  const impulseScore=totalStimuli>0&&hasActivity?Math.max(0,100-(errorsImpulse/totalStimuli)*100):0;
+  const concentrationScore=hasActivity?(attentionScore*0.35+impulseScore*0.40+reactionScore*0.25):0;
   return{reaction:Math.round(reactionScore),attention:Math.round(attentionScore),impulse:Math.round(impulseScore),concentration:Math.round(concentrationScore),avgMs:Math.round(avgReaction),hits:score,misses,impulseErrors:errorsImpulse,diffIdx:currentDiffIdx,diffName:DIFF_LEVELS[currentDiffIdx].name,duration:currentGameDuration};
 }
 
@@ -969,7 +1043,7 @@ function drawChart(hist){
 /* ══════════════════════════════════════════════════════
    SISTEMA DE ATUALIZAÇÃO
 ══════════════════════════════════════════════════════ */
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.3.0';
 let swRegistration = null;
 let updatePending = false;
 
@@ -1049,6 +1123,43 @@ function dismissUpdate() {
 // Fecha modal ao clicar no fundo
 document.getElementById('update-modal').addEventListener('click', e => {
   if (e.target === document.getElementById('update-modal')) dismissUpdate();
+});
+
+/* ══════════════════════════════════════════════════════
+   GAMES HUB
+══════════════════════════════════════════════════════ */
+function openGames(){
+  const overlay=document.getElementById('games-overlay');
+  const hub=document.getElementById('games-hub');
+  const frame=document.getElementById('games-frame');
+  // Reseta para o hub de seleção
+  hub.classList.add('open');
+  frame.style.display='none';
+  frame.src='';
+  document.getElementById('games-bar-title').innerText='🎮 Jogos';
+  overlay.classList.add('open');
+}
+
+function launchGame(src,title){
+  const hub=document.getElementById('games-hub');
+  const frame=document.getElementById('games-frame');
+  hub.classList.remove('open');
+  frame.style.display='block';
+  frame.src=src;
+  document.getElementById('games-bar-title').innerText=title;
+}
+
+function closeGames(){
+  const overlay=document.getElementById('games-overlay');
+  const frame=document.getElementById('games-frame');
+  overlay.classList.remove('open');
+  // Pequeno delay para o iframe descarregar sem flash
+  setTimeout(()=>{frame.src='';frame.style.display='none';},300);
+}
+
+// Escuta mensagem do BrainHunter pedindo para fechar
+window.addEventListener('message',e=>{
+  if(e.data&&e.data.type==='BRAINHUNTER_CLOSE') closeGames();
 });
 
 /* ══════ BOOT ══════ */

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Stroop Color</title>
+<style>
+:root{--bg:#060818;--card:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);--text:#c8d8f0;--muted:#4a6080;
+  --red:#ff6b6b;--blue:#4fc3f7;--green:#00e676;--yellow:#ffb74d;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;user-select:none;overflow:hidden;}
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;width:100%;max-width:420px;gap:14px;}
+.screen.active{display:flex;}
+h1{font-size:2rem;font-weight:800;background:linear-gradient(135deg,#ff6b6b,#4fc3f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.subtitle{color:var(--muted);font-size:.88rem;line-height:1.6;}
+.glass{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;width:100%;}
+.btn{padding:13px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;transition:.15s;width:100%;margin-top:6px;}
+.btn-primary{background:linear-gradient(135deg,#ff6b6b,#e53935);color:#fff;}
+.btn-secondary{background:var(--card);border:1px solid var(--border);color:var(--muted);}
+.btn-secondary:hover{border-color:#4fc3f7;color:#4fc3f7;}
+/* TOP BAR */
+.top-bar{display:flex;justify-content:space-between;align-items:center;width:100%;}
+.timer-display{font-size:2.2rem;font-weight:300;color:var(--text);font-variant-numeric:tabular-nums;}
+.timer-display.urgent{color:var(--red);animation:pulse .8s infinite;}
+@keyframes pulse{50%{opacity:.5;}}
+.score-display{font-size:1.8rem;font-weight:900;color:#4fc3f7;}
+/* STROOP WORD */
+.stroop-box{min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;width:100%;}
+.stroop-word{font-size:clamp(2.4rem,12vw,3.8rem);font-weight:900;letter-spacing:2px;transition:all .1s;text-shadow:0 0 20px currentColor;}
+.stroop-label{font-size:.72rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+/* TIME BAR */
+.time-bar-wrap{width:100%;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.time-bar-fill{height:100%;background:#4fc3f7;border-radius:3px;transition:width 1s linear,background .3s;}
+/* COLOR BUTTONS */
+.color-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
+.color-btn{padding:18px 10px;border:2px solid transparent;border-radius:14px;font-size:1rem;font-weight:900;cursor:pointer;letter-spacing:.5px;transition:.12s;position:relative;overflow:hidden;}
+.color-btn::after{content:'';position:absolute;inset:0;background:currentColor;opacity:0;transition:opacity .12s;}
+.color-btn:hover::after{opacity:.08;}
+.color-btn:active{transform:scale(.97);}
+.color-btn.red{background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.3);color:var(--red);}
+.color-btn.blue{background:rgba(79,195,247,.12);border-color:rgba(79,195,247,.3);color:var(--blue);}
+.color-btn.green{background:rgba(0,230,118,.12);border-color:rgba(0,230,118,.3);color:var(--green);}
+.color-btn.yellow{background:rgba(255,183,77,.12);border-color:rgba(255,183,77,.3);color:var(--yellow);}
+.color-btn.flash-ok{animation:flashOk .25s ease;}
+.color-btn.flash-err{animation:flashErr .25s ease;}
+@keyframes flashOk{50%{background:rgba(0,230,118,.25);}}
+@keyframes flashErr{50%{background:rgba(255,107,107,.25);}}
+/* METRICS */
+.metrics-row{display:flex;gap:8px;width:100%;}
+.metric{flex:1;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:9px 6px;text-align:center;}
+.metric-val{font-size:1.3rem;font-weight:900;color:#4fc3f7;}
+.metric-lbl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px;}
+.close-btn{position:fixed;top:16px;right:16px;background:var(--card);border:1px solid var(--border);color:var(--muted);width:36px;height:36px;border-radius:50%;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:100;}
+.close-btn:hover{border-color:var(--red);color:var(--red);}
+/* LEVEL BADGE */
+.lvl-badge{font-size:.68rem;font-weight:800;color:#ff6b6b;letter-spacing:2px;text-transform:uppercase;}
+/* CONGRUENCY HINT */
+.congruency-hint{font-size:.7rem;color:var(--muted);min-height:18px;}
+</style>
+</head>
+<body>
+<button class="close-btn" onclick="closeGame()">✕</button>
+
+<!-- MENU -->
+<div id="menu" class="screen active">
+  <h1>Stroop Color</h1>
+  <p class="subtitle">Toque na <strong>cor da tinta</strong>, não na palavra escrita.<br>Ignore o significado — confie nos olhos.</p>
+  <div class="glass">
+    <div style="font-size:.82rem;color:var(--muted);text-align:left;line-height:1.7;">
+      Exemplo: a palavra <span style="color:var(--blue);font-weight:800;">VERMELHO</span> escrita em azul.<br>
+      Resposta correta: <strong style="color:var(--blue);">AZUL</strong> (a cor da tinta).<br><br>
+      Nível 1 — só congruentes (fácil)<br>
+      Nível 2 — conflito total<br>
+      Nível 3 — conflito + distratores
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="startGame()">INICIAR — 60s</button>
+  <button class="btn btn-secondary" onclick="closeGame()">← Voltar</button>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <div class="top-bar">
+    <div>
+      <div class="lvl-badge" id="lvl-badge">NÍVEL 1</div>
+      <div class="timer-display" id="timer">60</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Pontos</div>
+      <div class="score-display" id="score">0</div>
+    </div>
+  </div>
+
+  <div class="time-bar-wrap"><div class="time-bar-fill" id="time-bar"></div></div>
+
+  <div class="stroop-box">
+    <div class="stroop-label">Qual é a COR desta palavra?</div>
+    <div class="stroop-word" id="stroop-word">CARREGANDO</div>
+    <div class="congruency-hint" id="congruency-hint"></div>
+  </div>
+
+  <div class="color-grid">
+    <button class="color-btn red"    onclick="pick('red')"    id="cbtn-red">VERMELHO</button>
+    <button class="color-btn blue"   onclick="pick('blue')"   id="cbtn-blue">AZUL</button>
+    <button class="color-btn green"  onclick="pick('green')"  id="cbtn-green">VERDE</button>
+    <button class="color-btn yellow" onclick="pick('yellow')" id="cbtn-yellow">AMARELO</button>
+  </div>
+
+  <div class="metrics-row">
+    <div class="metric"><div class="metric-val" id="m-hits">0</div><div class="metric-lbl">Acertos</div></div>
+    <div class="metric"><div class="metric-val" id="m-errors">0</div><div class="metric-lbl">Erros</div></div>
+    <div class="metric"><div class="metric-val" id="m-streak">0</div><div class="metric-lbl">Sequência</div></div>
+    <div class="metric"><div class="metric-val" id="m-rt">—</div><div class="metric-lbl">RT médio</div></div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="screen">
+  <h1>Resultado</h1>
+  <div class="glass">
+    <div class="metrics-row" style="margin-bottom:14px;">
+      <div class="metric"><div class="metric-val" id="r-score" style="color:#ff6b6b;">0</div><div class="metric-lbl">Pontos</div></div>
+      <div class="metric"><div class="metric-val" id="r-acc" style="color:#00e676;">0%</div><div class="metric-lbl">Acurácia</div></div>
+      <div class="metric"><div class="metric-val" id="r-rt">—</div><div class="metric-lbl">RT médio</div></div>
+    </div>
+    <div id="r-msg" style="font-size:.85rem;color:var(--muted);line-height:1.6;text-align:left;padding:12px;background:rgba(0,0,0,.2);border-radius:10px;"></div>
+  </div>
+  <button class="btn btn-primary" onclick="startGame()">Jogar Novamente</button>
+  <button class="btn btn-secondary" onclick="showScreen('menu')">← Menu</button>
+</div>
+
+<script>
+const COLORS=['red','blue','green','yellow'];
+const NAMES={red:'VERMELHO',blue:'AZUL',green:'VERDE',yellow:'AMARELO'};
+const COLOR_CSS={red:'var(--red)',blue:'var(--blue)',green:'var(--green)',yellow:'var(--yellow)'};
+const DURATION=60;
+
+let score=0,hits=0,errors=0,streak=0,maxStreak=0,rts=[],inkColor='',level=1;
+let timerInterval=null,timeLeft=DURATION,stimStart=0,enabled=false;
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startGame(){
+  score=0;hits=0;errors=0;streak=0;maxStreak=0;rts=[];level=1;
+  timeLeft=DURATION;enabled=false;
+  document.getElementById('score').innerText=0;
+  document.getElementById('m-hits').innerText=0;
+  document.getElementById('m-errors').innerText=0;
+  document.getElementById('m-streak').innerText=0;
+  document.getElementById('m-rt').innerText='—';
+  document.getElementById('time-bar').style.width='100%';
+  document.getElementById('time-bar').style.background='#4fc3f7';
+  document.getElementById('timer').className='timer-display';
+  showScreen('game');
+  timerInterval=setInterval(tick,1000);
+  nextStimulus();
+}
+
+function tick(){
+  timeLeft--;
+  document.getElementById('timer').innerText=timeLeft;
+  const ratio=timeLeft/DURATION;
+  document.getElementById('time-bar').style.width=(ratio*100)+'%';
+  document.getElementById('time-bar').style.background=
+    ratio>.5?'#4fc3f7':ratio>.25?'#ffb74d':'#ff6b6b';
+  if(timeLeft<=10) document.getElementById('timer').classList.add('urgent');
+  // Progressão de nível
+  if(hits===15&&level===1){level=2;updateLevelBadge();}
+  if(hits===35&&level===2){level=3;updateLevelBadge();}
+  if(timeLeft<=0){clearInterval(timerInterval);endGame();}
+}
+
+function updateLevelBadge(){
+  document.getElementById('lvl-badge').innerText='NÍVEL '+level;
+}
+
+function nextStimulus(){
+  if(timeLeft<=0) return;
+  enabled=false;
+  const word=document.getElementById('stroop-word');
+  word.style.opacity=0;
+  setTimeout(()=>{
+    // Escolhe ink color aleatória
+    inkColor=COLORS[Math.floor(Math.random()*COLORS.length)];
+    let textWord;
+    if(level===1){
+      // Congruente: palavra = cor
+      textWord=NAMES[inkColor];
+    } else {
+      // Incongruente: palavra ≠ cor
+      const others=COLORS.filter(c=>c!==inkColor);
+      const wordColor=others[Math.floor(Math.random()*others.length)];
+      textWord=NAMES[wordColor];
+    }
+    word.innerText=textWord;
+    word.style.color=COLOR_CSS[inkColor];
+    word.style.opacity=1;
+    // Hint de debug (remove em prod)
+    document.getElementById('congruency-hint').innerText=
+      level===1?'Congruente — word=cor':'Incongruente — ignore a palavra';
+    stimStart=performance.now();
+    enabled=true;
+  },150);
+}
+
+function pick(color){
+  if(!enabled||timeLeft<=0) return;
+  enabled=false;
+  const rt=performance.now()-stimStart;
+  rts.push(rt);
+  const btn=document.getElementById('cbtn-'+color);
+  if(color===inkColor){
+    hits++;streak++;maxStreak=Math.max(maxStreak,streak);
+    const pts=level===1?10:level===2?20+(streak>3?10:0):30+(streak>3?15:0);
+    score+=pts;
+    btn.classList.add('flash-ok');
+    setTimeout(()=>btn.classList.remove('flash-ok'),250);
+  } else {
+    errors++;streak=0;
+    btn.classList.add('flash-err');
+    setTimeout(()=>btn.classList.remove('flash-err'),250);
+  }
+  updateMetrics();
+  setTimeout(()=>nextStimulus(),200);
+}
+
+function updateMetrics(){
+  document.getElementById('score').innerText=score;
+  document.getElementById('m-hits').innerText=hits;
+  document.getElementById('m-errors').innerText=errors;
+  document.getElementById('m-streak').innerText=streak;
+  const avgRt=rts.length?Math.round(rts.reduce((a,b)=>a+b,0)/rts.length):0;
+  document.getElementById('m-rt').innerText=avgRt?avgRt+'ms':'—';
+}
+
+function endGame(){
+  enabled=false;
+  const total=hits+errors;
+  const acc=total>0?Math.round((hits/total)*100):0;
+  const avgRt=rts.length?Math.round(rts.reduce((a,b)=>a+b,0)/rts.length):0;
+  document.getElementById('r-score').innerText=score;
+  document.getElementById('r-acc').innerText=acc+'%';
+  document.getElementById('r-rt').innerText=avgRt?avgRt+'ms':'—';
+  let msg='';
+  if(acc>=90&&avgRt<500) msg='🔥 Controle inibitório excepcional! Você suprimiu interferência verbal com rapidez e precisão.';
+  else if(acc>=75) msg='✅ Bom desempenho! Flexibilidade cognitiva acima da média. Continue praticando para reduzir o RT.';
+  else msg='💪 O efeito Stroop é desafiador! A prática reduz o conflito palavra-cor progressivamente.';
+  msg+=`\nNível máximo atingido: ${level}. Sequência máxima: ${maxStreak}.`;
+  document.getElementById('r-msg').innerText=msg;
+  showScreen('result');
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='1') pick('red');
+  if(e.key==='2') pick('blue');
+  if(e.key==='3') pick('green');
+  if(e.key==='4') pick('yellow');
+  if(e.key==='Escape') closeGame();
+});
+
+function closeGame(){
+  clearInterval(timerInterval);
+  if(window.parent!==window) window.parent.postMessage({type:'BRAINHUNTER_CLOSE'},'*');
+  else showScreen('menu');
+}
+</script>
+</body>
+</html>

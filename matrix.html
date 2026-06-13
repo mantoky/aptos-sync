@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Matrix Sequence</title>
+<style>
+:root{--bg:#060818;--card:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);--accent:#a78bfa;--success:#00e676;--danger:#ff6b6b;--text:#c8d8f0;--muted:#4a6080;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;user-select:none;-webkit-tap-highlight-color:transparent;}
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;width:100%;max-width:420px;gap:14px;}
+.screen.active{display:flex;}
+h1{font-size:2rem;font-weight:800;background:linear-gradient(135deg,#a78bfa,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.subtitle{color:var(--muted);font-size:.88rem;line-height:1.6;}
+.glass{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;width:100%;}
+.btn{padding:13px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;transition:.15s;width:100%;margin-top:6px;}
+.btn-primary{background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;}
+.btn-secondary{background:var(--card);border:1px solid var(--border);color:var(--muted);}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+/* PHASE LABEL */
+.phase-badge{font-size:.72rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;}
+.phase-badge.watch{color:#ffb74d;}
+.phase-badge.recall{color:var(--accent);}
+.phase-badge.wait{color:var(--muted);}
+/* SPAN DISPLAY */
+.span-display{font-size:1rem;color:var(--muted);}
+.span-display strong{color:var(--accent);font-size:1.4rem;}
+/* GRID */
+.matrix-grid{display:grid;gap:8px;width:100%;}
+.matrix-cell{aspect-ratio:1;border-radius:12px;background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.08);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;}
+.matrix-cell.lit{background:rgba(167,139,250,.25);border-color:var(--accent);box-shadow:0 0 20px rgba(167,139,250,.4);}
+.matrix-cell.selected{background:rgba(79,195,247,.2);border-color:#4fc3f7;}
+.matrix-cell.correct{background:rgba(0,230,118,.2);border-color:var(--success);animation:cellPop .3s ease;}
+.matrix-cell.wrong{background:rgba(255,107,107,.2);border-color:var(--danger);animation:shake .3s ease;}
+@keyframes cellPop{50%{transform:scale(1.1);}}
+@keyframes shake{25%{transform:translateX(-4px);}75%{transform:translateX(4px);}100%{transform:translateX(0);}}
+/* LIVES */
+.lives{display:flex;gap:6px;justify-content:center;}
+.life{font-size:1.2rem;opacity:.3;transition:.3s;}
+.life.active{opacity:1;}
+/* METRICS */
+.metrics-row{display:flex;gap:8px;width:100%;}
+.metric{flex:1;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:9px 6px;text-align:center;}
+.metric-val{font-size:1.4rem;font-weight:900;color:var(--accent);}
+.metric-lbl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px;}
+.close-btn{position:fixed;top:16px;right:16px;background:var(--card);border:1px solid var(--border);color:var(--muted);width:36px;height:36px;border-radius:50%;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:100;}
+.close-btn:hover{border-color:var(--danger);color:var(--danger);}
+/* INSTRUCTION */
+.instruction{min-height:28px;font-size:.82rem;color:var(--muted);font-weight:600;}
+</style>
+</head>
+<body>
+<button class="close-btn" onclick="closeGame()">✕</button>
+
+<!-- MENU -->
+<div id="menu" class="screen active">
+  <h1>Matrix Sequence</h1>
+  <p class="subtitle">Observe a sequência de células que acendem.<br>Reproduza a ordem tocando nas células.</p>
+  <div class="glass" style="text-align:left;font-size:.82rem;color:var(--muted);line-height:1.8;">
+    🟣 Observe a sequência acender<br>
+    🔵 Toque nas células na mesma ordem<br>
+    📈 A cada acerto a sequência aumenta<br>
+    ❌ 3 erros encerram a sessão
+  </div>
+  <button class="btn btn-primary" onclick="startGame()">INICIAR</button>
+  <button class="btn btn-secondary" onclick="closeGame()">← Voltar</button>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+    <div class="phase-badge wait" id="phase-badge">AGUARDE</div>
+    <div class="lives" id="lives">
+      <span class="life active">❤️</span>
+      <span class="life active">❤️</span>
+      <span class="life active">❤️</span>
+    </div>
+  </div>
+
+  <div class="span-display">Sequência: <strong id="span-num">3</strong></div>
+  <div class="instruction" id="instruction">Prepare-se...</div>
+
+  <div class="matrix-grid" id="matrix-grid" style="grid-template-columns:repeat(3,1fr);pointer-events:none;"></div>
+
+  <div class="metrics-row">
+    <div class="metric"><div class="metric-val" id="m-span">3</div><div class="metric-lbl">Span atual</div></div>
+    <div class="metric"><div class="metric-val" id="m-best">3</div><div class="metric-lbl">Melhor span</div></div>
+    <div class="metric"><div class="metric-val" id="m-rounds">0</div><div class="metric-lbl">Rodadas</div></div>
+    <div class="metric"><div class="metric-val" id="m-acc">—</div><div class="metric-lbl">Acurácia</div></div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="screen">
+  <h1>Resultado</h1>
+  <div class="glass">
+    <div class="metrics-row" style="margin-bottom:14px;">
+      <div class="metric"><div class="metric-val" id="r-span" style="color:var(--accent);">0</div><div class="metric-lbl">Span máximo</div></div>
+      <div class="metric"><div class="metric-val" id="r-rounds" style="color:#4fc3f7;">0</div><div class="metric-lbl">Rodadas</div></div>
+      <div class="metric"><div class="metric-val" id="r-acc" style="color:#00e676;">0%</div><div class="metric-lbl">Acurácia</div></div>
+    </div>
+    <div id="r-msg" style="font-size:.85rem;color:var(--muted);line-height:1.6;text-align:left;padding:12px;background:rgba(0,0,0,.2);border-radius:10px;"></div>
+  </div>
+  <button class="btn btn-primary" onclick="startGame()">Jogar Novamente</button>
+  <button class="btn btn-secondary" onclick="showScreen('menu')">← Menu</button>
+</div>
+
+<script>
+const GRID_SIZE=9; // 3x3
+const MAX_LIVES=3;
+const LIT_DURATION=500;
+const LIT_GAP=200;
+
+let span=3,sequence=[],userInput=[],lives=MAX_LIVES;
+let phase='idle',rounds=0,roundsCorrect=0,bestSpan=3;
+let litTimeout=null;
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function buildGrid(){
+  const g=document.getElementById('matrix-grid');
+  g.innerHTML='';
+  for(let i=0;i<GRID_SIZE;i++){
+    const c=document.createElement('div');
+    c.className='matrix-cell';
+    c.dataset.idx=i;
+    c.addEventListener('click',()=>cellClick(i));
+    g.appendChild(c);
+  }
+}
+
+function cell(i){return document.getElementById('matrix-grid').children[i];}
+
+function startGame(){
+  span=3;lives=MAX_LIVES;rounds=0;roundsCorrect=0;bestSpan=3;
+  buildGrid();
+  updateLives();
+  updateMetrics();
+  showScreen('game');
+  setTimeout(()=>playRound(),600);
+}
+
+function updateLives(){
+  const ls=document.getElementById('lives').children;
+  for(let i=0;i<3;i++) ls[i].classList.toggle('active',i<lives);
+}
+
+function updateMetrics(){
+  document.getElementById('m-span').innerText=span;
+  document.getElementById('m-best').innerText=bestSpan;
+  document.getElementById('m-rounds').innerText=rounds;
+  const acc=rounds>0?Math.round((roundsCorrect/rounds)*100):0;
+  document.getElementById('m-acc').innerText=rounds>0?acc+'%':'—';
+  document.getElementById('span-num').innerText=span;
+}
+
+function playRound(){
+  // Gera sequência única
+  sequence=[];
+  const pool=[...Array(GRID_SIZE).keys()];
+  for(let i=0;i<span;i++){
+    const avail=pool.filter(x=>!sequence.includes(x));
+    sequence.push(avail[Math.floor(Math.random()*avail.length)]);
+  }
+  userInput=[];
+  phase='watch';
+  setPhase('watch','Observe a sequência');
+  document.getElementById('matrix-grid').style.pointerEvents='none';
+  // Acende células uma a uma
+  let i=0;
+  function litNext(){
+    if(i>0) cell(sequence[i-1]).classList.remove('lit');
+    if(i>=sequence.length){
+      phase='recall';
+      setPhase('recall','Reproduza a ordem');
+      document.getElementById('matrix-grid').style.pointerEvents='auto';
+      return;
+    }
+    cell(sequence[i]).classList.add('lit');
+    i++;
+    litTimeout=setTimeout(litNext,LIT_DURATION+LIT_GAP);
+  }
+  setTimeout(litNext,400);
+}
+
+function setPhase(type,msg){
+  const b=document.getElementById('phase-badge');
+  b.className='phase-badge '+type;
+  b.innerText=type==='watch'?'OBSERVE':type==='recall'?'REPRODUZA':'AGUARDE';
+  document.getElementById('instruction').innerText=msg;
+}
+
+function cellClick(idx){
+  if(phase!=='recall') return;
+  const c=cell(idx);
+  userInput.push(idx);
+  const pos=userInput.length-1;
+  if(userInput[pos]===sequence[pos]){
+    c.classList.add('selected');
+    if(userInput.length===sequence.length){
+      // Correto!
+      rounds++;roundsCorrect++;
+      sequence.forEach(i=>cell(i).classList.add('correct'));
+      phase='idle';
+      document.getElementById('matrix-grid').style.pointerEvents='none';
+      span++;bestSpan=Math.max(bestSpan,span);
+      updateMetrics();
+      setPhase('wait','✓ Correto! Próxima...');
+      setTimeout(()=>{
+        document.querySelectorAll('.matrix-cell').forEach(c=>{
+          c.className='matrix-cell';
+        });
+        playRound();
+      },900);
+    }
+  } else {
+    // Errado
+    c.classList.add('wrong');
+    rounds++;
+    lives--;
+    updateLives();
+    phase='idle';
+    document.getElementById('matrix-grid').style.pointerEvents='none';
+    // Mostra sequência correta brevemente
+    sequence.forEach(i=>cell(i).classList.add('lit'));
+    updateMetrics();
+    if(lives<=0){
+      setTimeout(()=>endGame(),1000);
+      return;
+    }
+    span=Math.max(3,span-1);
+    updateMetrics();
+    setPhase('wait','✗ Tente novamente');
+    setTimeout(()=>{
+      document.querySelectorAll('.matrix-cell').forEach(c=>c.className='matrix-cell');
+      playRound();
+    },1200);
+  }
+}
+
+function endGame(){
+  clearTimeout(litTimeout);
+  const acc=rounds>0?Math.round((roundsCorrect/rounds)*100):0;
+  document.getElementById('r-span').innerText=bestSpan;
+  document.getElementById('r-rounds').innerText=rounds;
+  document.getElementById('r-acc').innerText=acc+'%';
+  let msg='';
+  if(bestSpan>=7) msg='🔥 Span visuoespacial excepcional! A média humana fica entre 5-7. Você está no topo.';
+  else if(bestSpan>=5) msg='✅ Span dentro da média humana (5-7). A prática consistente amplia a capacidade.';
+  else msg='💪 Span de '+bestSpan+'. O treino regular do Corsi Block aumenta a memória de trabalho visuoespacial.';
+  document.getElementById('r-msg').innerText=msg;
+  showScreen('result');
+}
+
+function closeGame(){
+  clearTimeout(litTimeout);
+  if(window.parent!==window) window.parent.postMessage({type:'BRAINHUNTER_CLOSE'},'*');
+  else showScreen('menu');
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeGame();});
+</script>
+</body>
+</html>

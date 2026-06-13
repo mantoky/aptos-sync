@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Task Switch</title>
+<style>
+:root{--bg:#060818;--card:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);--accent:#34d399;--danger:#ff6b6b;--text:#c8d8f0;--muted:#4a6080;--taskA:#34d399;--taskB:#f59e0b;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;user-select:none;overflow:hidden;}
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;width:100%;max-width:420px;gap:14px;}
+.screen.active{display:flex;}
+h1{font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--taskA),var(--taskB));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.subtitle{color:var(--muted);font-size:.88rem;line-height:1.6;}
+.glass{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;width:100%;}
+.btn{padding:13px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;transition:.15s;width:100%;margin-top:6px;}
+.btn-primary{background:linear-gradient(135deg,#065f46,#34d399);color:#fff;}
+.btn-secondary{background:var(--card);border:1px solid var(--border);color:var(--muted);}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+/* TASK INDICATOR */
+.task-indicator{width:100%;padding:10px 16px;border-radius:12px;font-size:.82rem;font-weight:800;letter-spacing:.5px;text-align:center;transition:.2s;}
+.task-indicator.taskA{background:rgba(52,211,153,.12);border:2px solid rgba(52,211,153,.3);color:var(--taskA);}
+.task-indicator.taskB{background:rgba(245,158,11,.12);border:2px solid rgba(245,158,11,.3);color:var(--taskB);}
+/* NUMBER DISPLAY */
+.number-box{width:140px;height:140px;border-radius:20px;background:var(--card);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:5.5rem;font-weight:900;transition:.15s;}
+.number-box.taskA{border-color:var(--taskA);}
+.number-box.taskB{border-color:var(--taskB);}
+/* ANSWER BTNS */
+.answer-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;}
+.ans-btn{padding:20px 10px;border:2px solid var(--border);border-radius:14px;font-size:.95rem;font-weight:800;cursor:pointer;background:var(--card);color:var(--text);transition:.12s;letter-spacing:.3px;}
+.ans-btn:hover{transform:scale(1.03);}
+.ans-btn:active{transform:scale(.97);}
+.ans-btn:disabled{opacity:.3;cursor:default;transform:none;}
+.ans-btn.flash-ok{animation:fok .25s;}
+.ans-btn.flash-err{animation:ferr .25s;}
+@keyframes fok{50%{background:rgba(52,211,153,.3);}}
+@keyframes ferr{50%{background:rgba(255,107,107,.3);}}
+/* TIMER */
+.top-bar{display:flex;justify-content:space-between;align-items:center;width:100%;}
+.timer-big{font-size:2.4rem;font-weight:300;font-variant-numeric:tabular-nums;}
+.timer-big.urgent{color:var(--danger);animation:pulse .8s infinite;}
+@keyframes pulse{50%{opacity:.5;}}
+.score-big{font-size:1.8rem;font-weight:900;color:var(--accent);}
+.time-bar-wrap{width:100%;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.time-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width 1s linear,background .3s;}
+/* METRICS */
+.metrics-row{display:flex;gap:8px;width:100%;}
+.metric{flex:1;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:9px 6px;text-align:center;}
+.metric-val{font-size:1.3rem;font-weight:900;color:var(--accent);}
+.metric-lbl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px;}
+.switch-cost{font-size:.72rem;color:var(--muted);text-align:center;}
+.close-btn{position:fixed;top:16px;right:16px;background:var(--card);border:1px solid var(--border);color:var(--muted);width:36px;height:36px;border-radius:50%;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:100;}
+.close-btn:hover{border-color:var(--danger);color:var(--danger);}
+</style>
+</head>
+<body>
+<button class="close-btn" onclick="closeGame()">✕</button>
+
+<!-- MENU -->
+<div id="menu" class="screen active">
+  <h1>Task Switch</h1>
+  <p class="subtitle">Alterne entre duas regras conforme a instrução muda.</p>
+  <div class="glass" style="text-align:left;font-size:.82rem;line-height:2;">
+    <span style="color:var(--taskA);font-weight:800;">🟢 PAR / ÍMPAR</span> — o número é par ou ímpar?<br>
+    <span style="color:var(--taskB);font-weight:800;">🟡 MAIOR / MENOR</span> — é maior ou menor que 5?<br><br>
+    <span style="color:var(--muted);">A tarefa muda aleatoriamente. Responda o mais rápido possível.</span>
+  </div>
+  <button class="btn btn-primary" onclick="startGame()">INICIAR — 75s</button>
+  <button class="btn btn-secondary" onclick="closeGame()">← Voltar</button>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <div class="top-bar">
+    <div>
+      <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Tempo</div>
+      <div class="timer-big" id="timer">75</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Pontos</div>
+      <div class="score-big" id="score">0</div>
+    </div>
+  </div>
+  <div class="time-bar-wrap"><div class="time-bar-fill" id="time-bar"></div></div>
+
+  <div class="task-indicator taskA" id="task-label">🟢 PAR ou ÍMPAR?</div>
+
+  <div class="number-box taskA" id="number-box">
+    <span id="number-display">7</span>
+  </div>
+
+  <div class="answer-grid" id="answer-grid">
+    <button class="ans-btn" id="btn-left"  onclick="answer('left')"  disabled>PAR</button>
+    <button class="ans-btn" id="btn-right" onclick="answer('right')" disabled>ÍMPAR</button>
+  </div>
+
+  <div class="metrics-row">
+    <div class="metric"><div class="metric-val" id="m-hits">0</div><div class="metric-lbl">Acertos</div></div>
+    <div class="metric"><div class="metric-val" id="m-err">0</div><div class="metric-lbl">Erros</div></div>
+    <div class="metric"><div class="metric-val" id="m-rt">—</div><div class="metric-lbl">RT médio</div></div>
+    <div class="metric"><div class="metric-val" id="m-switches">0</div><div class="metric-lbl">Trocas</div></div>
+  </div>
+  <div class="switch-cost" id="switch-cost"></div>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="screen">
+  <h1>Resultado</h1>
+  <div class="glass">
+    <div class="metrics-row" style="margin-bottom:14px;">
+      <div class="metric"><div class="metric-val" id="r-score" style="color:var(--accent);">0</div><div class="metric-lbl">Pontos</div></div>
+      <div class="metric"><div class="metric-val" id="r-acc">0%</div><div class="metric-lbl">Acurácia</div></div>
+      <div class="metric"><div class="metric-val" id="r-cost">—</div><div class="metric-lbl">Custo troca</div></div>
+    </div>
+    <div id="r-msg" style="font-size:.85rem;color:var(--muted);line-height:1.6;text-align:left;padding:12px;background:rgba(0,0,0,.2);border-radius:10px;"></div>
+  </div>
+  <button class="btn btn-primary" onclick="startGame()">Jogar Novamente</button>
+  <button class="btn btn-secondary" onclick="showScreen('menu')">← Menu</button>
+</div>
+
+<script>
+const DURATION=75;
+const TASKS=['A','B']; // A=par/ímpar  B=maior/menor que 5
+
+let score=0,hits=0,errors=0,switches=0;
+let rts=[],switchRts=[],repeatRts=[];
+let timeLeft=DURATION,timerInterval=null;
+let currentTask='A',prevTask='',currentNum=0,correctAnswer='';
+let stimStart=0,enabled=false;
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startGame(){
+  score=0;hits=0;errors=0;switches=0;rts=[];switchRts=[];repeatRts=[];
+  timeLeft=DURATION;enabled=false;prevTask='';
+  document.getElementById('score').innerText=0;
+  document.getElementById('m-hits').innerText=0;
+  document.getElementById('m-err').innerText=0;
+  document.getElementById('m-rt').innerText='—';
+  document.getElementById('m-switches').innerText=0;
+  document.getElementById('switch-cost').innerText='';
+  document.getElementById('time-bar').style.width='100%';
+  document.getElementById('timer').className='timer-big';
+  showScreen('game');
+  timerInterval=setInterval(tick,1000);
+  nextStimulus();
+}
+
+function tick(){
+  timeLeft--;
+  document.getElementById('timer').innerText=timeLeft;
+  const r=timeLeft/DURATION;
+  document.getElementById('time-bar').style.width=(r*100)+'%';
+  document.getElementById('time-bar').style.background=r>.5?'var(--accent)':r>.25?'#f59e0b':'var(--danger)';
+  if(timeLeft<=10) document.getElementById('timer').classList.add('urgent');
+  if(timeLeft<=0){clearInterval(timerInterval);endGame();}
+}
+
+function nextStimulus(){
+  if(timeLeft<=0) return;
+  enabled=false;
+  document.getElementById('btn-left').disabled=true;
+  document.getElementById('btn-right').disabled=true;
+
+  setTimeout(()=>{
+    // Escolhe tarefa — 40% chance de trocar
+    prevTask=currentTask;
+    if(Math.random()<0.4){
+      currentTask=currentTask==='A'?'B':'A';
+      switches++;
+    }
+    const isSwitch=prevTask!==''&&currentTask!==prevTask;
+
+    // Número 1-9 exceto 5 (para maior/menor)
+    do{currentNum=Math.floor(Math.random()*9)+1;}while(currentNum===5);
+
+    // Determina resposta correta
+    const btnL=document.getElementById('btn-left');
+    const btnR=document.getElementById('btn-right');
+    if(currentTask==='A'){
+      btnL.innerText='PAR';btnR.innerText='ÍMPAR';
+      correctAnswer=currentNum%2===0?'left':'right';
+    } else {
+      btnL.innerText='MAIOR';btnR.innerText='MENOR';
+      correctAnswer=currentNum>5?'left':'right';
+    }
+
+    const box=document.getElementById('number-box');
+    const lbl=document.getElementById('task-label');
+    const cls=currentTask==='A'?'taskA':'taskB';
+    box.className='number-box '+cls;
+    lbl.className='task-indicator '+cls;
+    lbl.innerText=currentTask==='A'?'🟢 PAR ou ÍMPAR?':'🟡 MAIOR ou MENOR que 5?';
+    document.getElementById('number-display').innerText=currentNum;
+
+    document.getElementById('m-switches').innerText=switches;
+    stimStart=performance.now();
+    enabled=true;
+    btnL.disabled=false;btnR.disabled=false;
+  },200);
+}
+
+function answer(side){
+  if(!enabled||timeLeft<=0) return;
+  enabled=false;
+  document.getElementById('btn-left').disabled=true;
+  document.getElementById('btn-right').disabled=true;
+  const rt=performance.now()-stimStart;
+  rts.push(rt);
+  const isSwitch=prevTask!==''&&currentTask!==prevTask;
+  if(isSwitch) switchRts.push(rt); else repeatRts.push(rt);
+
+  const btn=document.getElementById(side==='left'?'btn-left':'btn-right');
+  if(side===correctAnswer){
+    hits++;
+    const baseScore=currentTask==='A'?10:15;
+    const bonus=rt<600?10:rt<900?5:0;
+    score+=baseScore+bonus;
+    btn.classList.add('flash-ok');
+    setTimeout(()=>btn.classList.remove('flash-ok'),250);
+  } else {
+    errors++;
+    btn.classList.add('flash-err');
+    setTimeout(()=>btn.classList.remove('flash-err'),250);
+  }
+  updateMetrics();
+  setTimeout(()=>nextStimulus(),300);
+}
+
+function updateMetrics(){
+  document.getElementById('score').innerText=score;
+  document.getElementById('m-hits').innerText=hits;
+  document.getElementById('m-err').innerText=errors;
+  const avgRt=rts.length?Math.round(rts.reduce((a,b)=>a+b,0)/rts.length):0;
+  document.getElementById('m-rt').innerText=avgRt?avgRt+'ms':'—';
+  // Switch cost = diferença de RT entre troca e repetição
+  if(switchRts.length>2&&repeatRts.length>2){
+    const sAvg=Math.round(switchRts.reduce((a,b)=>a+b,0)/switchRts.length);
+    const rAvg=Math.round(repeatRts.reduce((a,b)=>a+b,0)/repeatRts.length);
+    const cost=sAvg-rAvg;
+    document.getElementById('switch-cost').innerText=`Custo de troca: +${cost}ms`;
+  }
+}
+
+function endGame(){
+  enabled=false;
+  const total=hits+errors;
+  const acc=total>0?Math.round((hits/total)*100):0;
+  const avgRt=rts.length?Math.round(rts.reduce((a,b)=>a+b,0)/rts.length):0;
+  let cost=null;
+  if(switchRts.length>2&&repeatRts.length>2){
+    const sAvg=Math.round(switchRts.reduce((a,b)=>a+b,0)/switchRts.length);
+    const rAvg=Math.round(repeatRts.reduce((a,b)=>a+b,0)/repeatRts.length);
+    cost=sAvg-rAvg;
+  }
+  document.getElementById('r-score').innerText=score;
+  document.getElementById('r-acc').innerText=acc+'%';
+  document.getElementById('r-cost').innerText=cost!==null?'+'+cost+'ms':'—';
+  let msg=`Acurácia: ${acc}% | RT médio: ${avgRt}ms\n`;
+  if(cost!==null){
+    msg+=`Custo de troca: +${cost}ms — `;
+    if(cost<150) msg+='excelente flexibilidade cognitiva!';
+    else if(cost<300) msg+='flexibilidade dentro da média (150-300ms é típico).';
+    else msg+='custo elevado — o treino reduz essa latência progressivamente.';
+  }
+  if(acc>=85) msg+='\n🔥 Alta acurácia — seu executivo central gere alternâncias com eficiência.';
+  document.getElementById('r-msg').innerText=msg;
+  showScreen('result');
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A') answer('left');
+  if(e.key==='ArrowRight'||e.key==='d'||e.key==='D') answer('right');
+  if(e.key==='Escape') closeGame();
+});
+
+function closeGame(){
+  clearInterval(timerInterval);
+  if(window.parent!==window) window.parent.postMessage({type:'BRAINHUNTER_CLOSE'},'*');
+  else showScreen('menu');
+}
+</script>
+</body>
+</html>

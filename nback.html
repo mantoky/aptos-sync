@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>N-Back Lite</title>
+<style>
+:root{--bg:#060818;--card:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);--accent:#4fc3f7;--success:#00e676;--danger:#ff6b6b;--text:#c8d8f0;--muted:#4a6080;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;user-select:none;overflow:hidden;}
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;width:100%;max-width:420px;gap:16px;}
+.screen.active{display:flex;}
+h1{font-size:2rem;font-weight:800;letter-spacing:-1px;background:linear-gradient(135deg,var(--accent),#a8edff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.subtitle{color:var(--muted);font-size:.9rem;line-height:1.5;}
+.glass{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;width:100%;}
+.btn{padding:13px 28px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;transition:.15s;width:100%;margin-top:6px;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#0288d1);color:#fff;}
+.btn-primary:hover{opacity:.9;}
+.btn-secondary{background:var(--card);border:1px solid var(--border);color:var(--muted);}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+/* GAME */
+.level-badge{font-size:.75rem;font-weight:800;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:4px;}
+.stimulus-box{width:140px;height:140px;border-radius:20px;background:var(--card);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:5rem;font-weight:900;transition:all .15s;position:relative;overflow:hidden;}
+.stimulus-box.show{border-color:var(--accent);background:rgba(79,195,247,.1);box-shadow:0 0 30px rgba(79,195,247,.2);}
+.stimulus-box.blank{opacity:.3;}
+.progress-ring{position:relative;width:48px;height:48px;}
+.progress-ring svg{transform:rotate(-90deg);}
+.progress-ring circle{fill:none;stroke:var(--border);stroke-width:4;}
+.progress-ring .fill{stroke:var(--accent);stroke-dasharray:126;stroke-dashoffset:126;stroke-linecap:round;transition:stroke-dashoffset linear;}
+.trial-info{font-size:.78rem;color:var(--muted);}
+.answer-btns{display:flex;gap:12px;width:100%;}
+.answer-btn{flex:1;padding:16px;border:2px solid var(--border);border-radius:14px;font-size:.9rem;font-weight:800;cursor:pointer;background:var(--card);color:var(--text);transition:.15s;letter-spacing:.5px;}
+.answer-btn:hover{transform:scale(1.03);}
+.answer-btn.yes{border-color:var(--success);color:var(--success);}
+.answer-btn.yes:hover{background:rgba(0,230,118,.1);}
+.answer-btn.no{border-color:var(--danger);color:var(--danger);}
+.answer-btn.no:hover{background:rgba(255,107,107,.1);}
+.answer-btn:disabled{opacity:.35;cursor:default;transform:none;}
+.feedback{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;animation:pop .3s ease;}
+@keyframes pop{0%{transform:scale(.5);opacity:0;}60%{transform:scale(1.2);}100%{transform:scale(1);opacity:1;}}
+.fb-correct{background:rgba(0,230,118,.15);}
+.fb-wrong{background:rgba(255,107,107,.15);}
+.fb-miss{background:rgba(255,152,0,.15);}
+.metrics-row{display:flex;gap:10px;width:100%;}
+.metric{flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;}
+.metric-val{font-size:1.4rem;font-weight:900;color:var(--accent);}
+.metric-lbl{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+.hint-row{font-size:.75rem;color:var(--muted);line-height:1.5;}
+.n-indicator{display:flex;gap:6px;justify-content:center;align-items:center;}
+.n-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:.3s;}
+.n-dot.active{background:var(--accent);}
+.close-btn{position:fixed;top:16px;right:16px;background:var(--card);border:1px solid var(--border);color:var(--muted);width:36px;height:36px;border-radius:50%;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;z-index:100;}
+.close-btn:hover{border-color:var(--danger);color:var(--danger);}
+</style>
+</head>
+<body>
+<button class="close-btn" onclick="closeGame()" title="Fechar">✕</button>
+
+<!-- MENU -->
+<div id="menu" class="screen active">
+  <h1>N-Back Lite</h1>
+  <p class="subtitle">Memorize a sequência de letras.<br>Responda se a letra atual é igual à de <strong>N posições atrás</strong>.</p>
+  <div class="glass">
+    <div class="n-indicator" style="margin-bottom:14px;">
+      <span style="font-size:.75rem;color:var(--muted);margin-right:4px;">Nível atual:</span>
+      <div class="n-dot active" id="dot1"></div>
+      <div class="n-dot" id="dot2"></div>
+      <div class="n-dot" id="dot3"></div>
+      <span id="n-label" style="font-size:.8rem;color:var(--accent);font-weight:800;margin-left:4px;">1-Back</span>
+    </div>
+    <div class="hint-row">
+      <strong style="color:var(--text);">Como jogar:</strong><br>
+      Letras aparecem uma a uma.<br>
+      Pressione <strong style="color:var(--success);">SIM</strong> se a letra atual for igual à que apareceu N posições atrás.<br>
+      Pressione <strong style="color:var(--danger);">NÃO</strong> caso contrário.<br><br>
+      O N aumenta conforme seu desempenho melhora.
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="startGame()">INICIAR</button>
+  <button class="btn btn-secondary" onclick="closeGame()">← Voltar</button>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+    <div class="level-badge" id="level-label">1-BACK</div>
+    <div class="progress-ring" id="progress-ring">
+      <svg width="48" height="48"><circle cx="24" cy="24" r="20"/><circle class="fill" id="ring-fill" cx="24" cy="24" r="20"/></svg>
+    </div>
+    <div class="trial-info" id="trial-info">0 / 20</div>
+  </div>
+
+  <div class="stimulus-box blank" id="stimulus-box">
+    <span id="stimulus-letter">?</span>
+  </div>
+
+  <div id="feedback-slot" style="height:44px;display:flex;align-items:center;justify-content:center;"></div>
+
+  <div class="metrics-row">
+    <div class="metric"><div class="metric-val" id="m-hits">0</div><div class="metric-lbl">Acertos</div></div>
+    <div class="metric"><div class="metric-val" id="m-fa">0</div><div class="metric-lbl">Falsos</div></div>
+    <div class="metric"><div class="metric-val" id="m-miss">0</div><div class="metric-lbl">Perdidos</div></div>
+    <div class="metric"><div class="metric-val" id="m-pct">—</div><div class="metric-lbl">Acurácia</div></div>
+  </div>
+
+  <div class="answer-btns">
+    <button class="answer-btn no" id="btn-no" onclick="answer(false)" disabled>✕ NÃO</button>
+    <button class="answer-btn yes" id="btn-yes" onclick="answer(true)" disabled>✓ SIM</button>
+  </div>
+
+  <div class="hint-row" id="game-hint"></div>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="screen">
+  <h1>Resultado</h1>
+  <div class="glass">
+    <div class="metrics-row" style="margin-bottom:14px;">
+      <div class="metric"><div class="metric-val" id="r-n" style="color:var(--accent);">1</div><div class="metric-lbl">N-Back</div></div>
+      <div class="metric"><div class="metric-val" id="r-pct" style="color:var(--success);">0%</div><div class="metric-lbl">Acurácia</div></div>
+      <div class="metric"><div class="metric-val" id="r-hits">0</div><div class="metric-lbl">Acertos</div></div>
+    </div>
+    <div id="r-msg" style="font-size:.88rem;color:var(--muted);line-height:1.5;text-align:left;padding:12px;background:rgba(0,0,0,.2);border-radius:10px;"></div>
+  </div>
+  <button class="btn btn-primary" onclick="startGame()">Jogar Novamente</button>
+  <button class="btn btn-secondary" onclick="showScreen('menu')">← Menu</button>
+</div>
+
+<script>
+const LETTERS='BCDFGHJKLMNPQRSTVWXZ'; // sem vogais — mais difícil
+const TRIALS=20;
+const STIM_TIME=600;  // ms exibindo letra
+const ISI=900;        // intervalo entre estímulos (ms)
+const RING_CIRCUM=126;
+
+let N=1, sequence=[], answers=[], hits=0, misses=0, falseAlarms=0;
+let currentTrial=0, awaitingAnswer=false, stimTimer=null, answered=false;
+let ringInterval=null;
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function updateNDots(){
+  [1,2,3].forEach(i=>{
+    document.getElementById('dot'+i).classList.toggle('active',i<=N);
+  });
+  document.getElementById('n-label').innerText=N+'-Back';
+  document.getElementById('level-label').innerText=N+'-BACK';
+}
+
+function startGame(){
+  N=Math.max(1,N); // mantém N entre sessões
+  sequence=[];answers=[];hits=0;misses=0;falseAlarms=0;
+  currentTrial=0;awaitingAnswer=false;answered=false;
+  updateNDots();
+  document.getElementById('m-hits').innerText=0;
+  document.getElementById('m-fa').innerText=0;
+  document.getElementById('m-miss').innerText=0;
+  document.getElementById('m-pct').innerText='—';
+  document.getElementById('feedback-slot').innerHTML='';
+  document.getElementById('game-hint').innerText='Aguarde a sequência...';
+  showScreen('game');
+  setTimeout(()=>nextTrial(),600);
+}
+
+function nextTrial(){
+  if(currentTrial>=TRIALS){endGame();return;}
+
+  // Gera letra — ~30% chance de match para evitar viés
+  let letter;
+  if(currentTrial>=N && Math.random()<0.30){
+    letter=sequence[currentTrial-N]; // match intencional
+  } else {
+    do{ letter=LETTERS[Math.floor(Math.random()*LETTERS.length)]; }
+    while(currentTrial>=N && letter===sequence[currentTrial-N]); // garante não-match
+  }
+  sequence.push(letter);
+
+  // Exibe estímulo
+  const box=document.getElementById('stimulus-box');
+  const ltr=document.getElementById('stimulus-letter');
+  box.classList.remove('blank');box.classList.add('show');
+  ltr.innerText=letter;
+
+  // Anima anel de progresso
+  const fill=document.getElementById('ring-fill');
+  fill.style.transition='none';
+  fill.style.strokeDashoffset=RING_CIRCUM;
+  setTimeout(()=>{
+    fill.style.transition=`stroke-dashoffset ${STIM_TIME+ISI}ms linear`;
+    fill.style.strokeDashoffset=0;
+  },30);
+
+  // Habilita resposta após N estímulos
+  answered=false;
+  const canAnswer=currentTrial>=N;
+  document.getElementById('btn-yes').disabled=!canAnswer;
+  document.getElementById('btn-no').disabled=!canAnswer;
+  awaitingAnswer=canAnswer;
+
+  document.getElementById('trial-info').innerText=`${currentTrial+1} / ${TRIALS}`;
+  document.getElementById('game-hint').innerText=
+    canAnswer ? `É igual à letra de ${N} atrás?` : `Memorize... (${N-currentTrial} para ativar)`;
+
+  // ISI: esconde letra após STIM_TIME
+  stimTimer=setTimeout(()=>{
+    box.classList.remove('show');box.classList.add('blank');
+    ltr.innerText='·';
+    // Se não respondeu ainda (miss)
+    setTimeout(()=>{
+      if(awaitingAnswer&&!answered) registerMiss();
+      currentTrial++;
+      setTimeout(()=>nextTrial(),100);
+    },ISI-STIM_TIME);
+  },STIM_TIME);
+}
+
+function answer(isMatch){
+  if(!awaitingAnswer||answered) return;
+  answered=true;
+  awaitingAnswer=false;
+  const correct=sequence[currentTrial-N]===sequence[currentTrial];
+  const slot=document.getElementById('feedback-slot');
+  if(isMatch===correct){
+    hits++;showFeedback('✓','correct');
+  } else {
+    if(isMatch&&!correct){falseAlarms++;showFeedback('✗','wrong');}
+    else{misses++;showFeedback('◌','miss');}
+  }
+  updateMetrics();
+}
+
+function registerMiss(){
+  const correct=sequence[currentTrial-N]===sequence[currentTrial];
+  if(correct){misses++;showFeedback('◌','miss');updateMetrics();}
+}
+
+function showFeedback(icon,type){
+  const slot=document.getElementById('feedback-slot');
+  const cls=type==='correct'?'fb-correct':type==='wrong'?'fb-wrong':'fb-miss';
+  slot.innerHTML=`<div class="feedback ${cls}">${icon}</div>`;
+  setTimeout(()=>{slot.innerHTML='';},500);
+}
+
+function updateMetrics(){
+  const total=hits+misses+falseAlarms;
+  const pct=total>0?Math.round((hits/Math.max(1,hits+misses+falseAlarms))*100):0;
+  document.getElementById('m-hits').innerText=hits;
+  document.getElementById('m-fa').innerText=falseAlarms;
+  document.getElementById('m-miss').innerText=misses;
+  document.getElementById('m-pct').innerText=pct+'%';
+}
+
+function endGame(){
+  clearTimeout(stimTimer);
+  const matchTrials=TRIALS-N;
+  const pct=matchTrials>0?Math.round((hits/matchTrials)*100):0;
+  document.getElementById('r-n').innerText=N;
+  document.getElementById('r-pct').innerText=pct+'%';
+  document.getElementById('r-hits').innerText=hits;
+
+  // Ajuste automático de N
+  let msg='';
+  if(pct>=80){
+    N=Math.min(3,N+1);
+    msg=`🔥 Excelente! Acurácia ${pct}% — próxima sessão será ${N}-Back. Seu córtex pré-frontal agradece!`;
+  } else if(pct>=60){
+    msg=`✅ Bom desempenho! Acurácia ${pct}% — mantenha o ${N}-Back para consolidar.`;
+  } else {
+    N=Math.max(1,N-1);
+    msg=`💪 Acurácia ${pct}% — reduzindo para ${N}-Back. A memória de trabalho melhora com prática consistente.`;
+  }
+  document.getElementById('r-msg').innerText=msg;
+  updateNDots();
+  showScreen('result');
+}
+
+// Teclado: S=Sim, N=Não
+document.addEventListener('keydown',e=>{
+  if(e.key==='s'||e.key==='S') answer(true);
+  if(e.key==='n'||e.key==='N') answer(false);
+  if(e.key==='Escape') closeGame();
+});
+
+function closeGame(){
+  clearTimeout(stimTimer);
+  if(window.parent!==window) window.parent.postMessage({type:'BRAINHUNTER_CLOSE'},'*');
+  else showScreen('menu');
+}
+</script>
+</body>
+</html>

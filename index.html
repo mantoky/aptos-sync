@@ -277,11 +277,12 @@ button.icon-btn:hover{background:rgba(218,119,86,0.1);border-color:rgba(218,119,
 #games-hub{
   display:none;
   flex:1;flex-direction:column;
-  justify-content:center;align-items:center;
-  padding:24px;text-align:center;
+  align-items:center;
+  padding:16px;
+  overflow-y:auto;
 }
 #games-hub.open{display:flex;}
-#games-hub h2{color:#c8d8f0;font-size:1.1rem;margin-bottom:20px;letter-spacing:.5px;}
+#games-hub h2{color:#c8d8f0;font-size:1rem;margin-bottom:14px;letter-spacing:.5px;text-align:center;flex-shrink:0;}
 .game-card{
   width:100%;max-width:320px;
   background:rgba(255,255,255,0.04);
@@ -530,13 +531,34 @@ button.icon-btn:hover{background:rgba(218,119,86,0.1);border-color:rgba(218,119,
   </div>
   <!-- Hub de seleção de jogos -->
   <div id="games-hub" class="open">
-    <h2>Escolha um jogo</h2>
+    <h2>🧠 Pack Cognitivo</h2>
     <div class="game-card" onclick="launchGame('brainhunter.html','🧩 BrainHunter Pro')">
       <span class="gc-icon">🧩</span>
-      <div>
-        <div class="gc-name">BrainHunter Pro</div>
-        <div class="gc-desc">Caça-palavras cognitivo com níveis progressivos, modo contrarrelógio e categorias temáticas.</div>
-      </div>
+      <div><div class="gc-name">BrainHunter Pro</div><div class="gc-desc">Atenção focada · Caça-palavras cognitivo progressivo com combo e pistas</div></div>
+    </div>
+    <div class="game-card" onclick="launchGame('nback.html','🔢 N-Back Lite')">
+      <span class="gc-icon">🔢</span>
+      <div><div class="gc-name">N-Back Lite</div><div class="gc-desc">Memória de trabalho · Sequência de letras com N posições de distância</div></div>
+    </div>
+    <div class="game-card" onclick="launchGame('stroop.html','🎨 Stroop Color')">
+      <span class="gc-icon">🎨</span>
+      <div><div class="gc-name">Stroop Color</div><div class="gc-desc">Controle inibitório · Toque na cor da tinta, ignore a palavra</div></div>
+    </div>
+    <div class="game-card" onclick="launchGame('matrix.html','🧩 Matrix Sequence')">
+      <span class="gc-icon">🟣</span>
+      <div><div class="gc-name">Matrix Sequence</div><div class="gc-desc">Memória visuoespacial · Reproduza a sequência de células (Corsi Block)</div></div>
+    </div>
+    <div class="game-card" onclick="launchGame('taskswitch.html','🔄 Task Switch')">
+      <span class="gc-icon">🔄</span>
+      <div><div class="gc-name">Task Switch</div><div class="gc-desc">Flexibilidade cognitiva · Alterne entre par/ímpar e maior/menor</div></div>
+    </div>
+    <div class="game-card" onclick="launchGame('visualsearch.html','👁️ Visual Search')">
+      <span class="gc-icon">👁️</span>
+      <div><div class="gc-name">Visual Search</div><div class="gc-desc">Atenção seletiva · Encontre os alvos entre distradores em grades progressivas</div></div>
+    </div>
+    <div class="game-card" onclick="launchGame('dualtask.html','🔵 Dual Task')">
+      <span class="gc-icon">🔵</span>
+      <div><div class="gc-name">Dual Task</div><div class="gc-desc">Atenção dividida · Rastreie o ponto e responda os sons ao mesmo tempo</div></div>
     </div>
   </div>
   <!-- iframe do jogo selecionado -->
@@ -575,7 +597,7 @@ const DIFF_LEVELS=[
   {name:'FÁCIL',   desc:'Para começar',      minI:Math.round(784*1.15),  maxI:Math.round(1764*1.15)},
   {name:'MÉDIO',   desc:'Velocidade padrão', minI:Math.round(784*0.97),  maxI:Math.round(1764*0.97)},
   {name:'DIFÍCIL', desc:'Atenção redobrada', minI:Math.round(784*0.768), maxI:Math.round(1764*0.768)},
-  {name:'EXPERTO', desc:'Máxima exigência',  minI:Math.round(784*0.665), maxI:Math.round(1764*0.665)},
+  {name:'EXPERTO', desc:'Máxima exigência',  minI:Math.round(784*0.645), maxI:Math.round(1764*0.645)},
 ];
 // Tempo: 25s a 60s, step 2s → 19 posições (índices 0..18)
 const TIME_MIN=25,TIME_MAX=61,TIME_STEP=2;
@@ -950,14 +972,27 @@ function flashButton(){triggerBtn.classList.add('btn-flash');setTimeout(()=>trig
 /* ══════ MÉTRICAS ══════ */
 function calculateMetrics(){
   let avgReaction=0,reactionScore=0;
-  if(reactionTimes.length>0){avgReaction=reactionTimes.reduce((a,b)=>a+b,0)/reactionTimes.length;reactionScore=Math.min(100,Math.max(0,100-((avgReaction-350)/5)));}
+  if(reactionTimes.length>0){
+    avgReaction=reactionTimes.reduce((a,b)=>a+b,0)/reactionTimes.length;
+    if(avgReaction<200) reactionScore=95; // RT < 200ms = possível antecipação, teto 95%
+    else if(avgReaction<=350) reactionScore=100; // janela ideal 200-350ms
+    else reactionScore=Math.max(0,100-((avgReaction-350)/5)); // penaliza acima de 350ms
+  }
   const attentionScore=totalTargetsShown>0?(score/totalTargetsShown)*100:0;
   const totalStimuli=totalTargetsShown+errorsImpulse;
   const hasActivity=score>0||errorsImpulse>0;
-  const impulseScore=totalStimuli>0&&hasActivity?Math.max(0,100-(errorsImpulse/totalStimuli)*100):0;
-  const concentrationScore=hasActivity?(attentionScore*0.35+impulseScore*0.40+reactionScore*0.25):0;
+  let impulseScore=0;
+  if(hasActivity&&totalStimuli>0){
+    // Combinação fixa (10pts/erro) + relativa (30% do ratio) — mais exigente e honesta
+    const fixedPenalty=errorsImpulse*10;
+    const relativePenalty=(errorsImpulse/totalStimuli)*30;
+    impulseScore=Math.max(0,100-fixedPenalty-relativePenalty);
+  }
+  // Concentração: Atenção 40%, Impulso 35%, Reação 25% — mais equilibrado
+  const concentrationScore=hasActivity?(attentionScore*0.40+impulseScore*0.35+reactionScore*0.25):0;
   return{reaction:Math.round(reactionScore),attention:Math.round(attentionScore),impulse:Math.round(impulseScore),concentration:Math.round(concentrationScore),avgMs:Math.round(avgReaction),hits:score,misses,impulseErrors:errorsImpulse,diffIdx:currentDiffIdx,diffName:DIFF_LEVELS[currentDiffIdx].name,duration:currentGameDuration};
 }
+
 
 function isApproved(m){return m.reaction>=APPROVAL_THRESHOLD&&m.attention>=APPROVAL_THRESHOLD&&m.impulse>=APPROVAL_THRESHOLD&&m.concentration>=APPROVAL_THRESHOLD;}
 
@@ -1043,7 +1078,7 @@ function drawChart(hist){
 /* ══════════════════════════════════════════════════════
    SISTEMA DE ATUALIZAÇÃO
 ══════════════════════════════════════════════════════ */
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.4.0';
 let swRegistration = null;
 let updatePending = false;
 

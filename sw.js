@@ -1,8 +1,14 @@
-const CACHE_NAME = 'aptos-sync-v1.3.0';
+const CACHE_NAME = 'aptos-sync-v1.4.0';
 const ASSETS = [
   '/',
   '/index.html',
   '/brainhunter.html',
+  '/nback.html',
+  '/stroop.html',
+  '/matrix.html',
+  '/taskswitch.html',
+  '/visualsearch.html',
+  '/dualtask.html',
   '/manifest.json',
   '/version.json',
   '/icons/icon-192x192.png',

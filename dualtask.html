@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Dual Task</title>
+<style>
+:root{--bg:#060818;--card:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);--accent:#e879f9;--success:#00e676;--danger:#ff6b6b;--text:#c8d8f0;--muted:#4a6080;--low:#4fc3f7;--high:#ff6b6b;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;user-select:none;-webkit-tap-highlight-color:transparent;overflow:hidden;}
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;width:100%;max-width:420px;gap:12px;}
+.screen.active{display:flex;}
+h1{font-size:2rem;font-weight:800;background:linear-gradient(135deg,#e879f9,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.subtitle{color:var(--muted);font-size:.88rem;line-height:1.6;}
+.glass{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;width:100%;}
+.btn{padding:13px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;transition:.15s;width:100%;margin-top:6px;}
+.btn-primary{background:linear-gradient(135deg,#7e22ce,#e879f9);color:#fff;}
+.btn-secondary{background:var(--card);border:1px solid var(--border);color:var(--muted);}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+/* TIMER BAR */
+.top-bar{display:flex;justify-content:space-between;align-items:center;width:100%;}
+.timer-big{font-size:2.2rem;font-weight:300;font-variant-numeric:tabular-nums;}
+.timer-big.urgent{color:var(--danger);animation:pulse .8s infinite;}
+@keyframes pulse{50%{opacity:.5;}}
+.score-big{font-size:1.8rem;font-weight:900;color:var(--accent);}
+.time-bar-wrap{width:100%;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.time-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width 1s linear,background .3s;}
+/* TRACKING TASK */
+.track-arena{width:100%;height:200px;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:16px;position:relative;overflow:hidden;touch-action:none;}
+.track-label{position:absolute;top:8px;left:10px;font-size:.65rem;color:var(--muted);font-weight:800;letter-spacing:1px;text-transform:uppercase;}
+.track-target{width:28px;height:28px;border-radius:50%;background:var(--accent);position:absolute;transform:translate(-50%,-50%);transition:none;box-shadow:0 0 12px rgba(232,121,249,.6);pointer-events:none;}
+.cursor-dot{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.7);position:absolute;transform:translate(-50%,-50%);pointer-events:none;border:2px solid white;}
+.track-hit{background:rgba(0,230,118,.15);border-color:rgba(0,230,118,.4);}
+.distance-bar{position:absolute;bottom:8px;left:10px;right:10px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;}
+.distance-fill{height:100%;border-radius:2px;transition:width .1s,background .1s;}
+/* AUDIO TASK */
+.audio-panel{width:100%;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;}
+.audio-label{font-size:.68rem;color:var(--muted);font-weight:800;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
+.tone-indicator{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.05);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.4rem;transition:.15s;}
+.tone-indicator.low-active{background:rgba(79,195,247,.2);border-color:var(--low);}
+.tone-indicator.high-active{background:rgba(255,107,107,.2);border-color:var(--high);}
+.audio-btns{display:flex;gap:8px;flex:1;}
+.tone-btn{flex:1;padding:10px 6px;border:2px solid var(--border);border-radius:10px;font-size:.8rem;font-weight:800;cursor:pointer;background:var(--card);color:var(--text);transition:.12s;letter-spacing:.3px;}
+.tone-btn:hover{transform:scale(1.03);}
+.tone-btn.low{border-color:rgba(79,195,247,.3);color:var(--low);}
+.tone-btn.high{border-color:rgba(255,107,107,.3);color:var(--high);}
+.tone-btn.flash-ok{animation:fok .2s;}
+.tone-btn.flash-err{animation:ferr .2s;}
+@keyframes fok{50%{background:rgba(0,230,118,.25);}}
+@keyframes ferr{50%{background:rgba(255,107,107,.25);}}
+.tone-btn:disabled{opacity:.3;cursor:default;}
+/* METRICS */
+.metrics-row{display:flex;gap:8px;width:100%;}
+.metric{flex:1;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:8px 5px;text-align:center;}
+.metric-val{font-size:1.2rem;font-weight:900;color:var(--accent);}
+.metric-lbl{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px;}
+.close-btn{position:fixed;top:16px;right:16px;background:var(--card);border:1px solid var(--border);color:var(--muted);width:36px;height:36px;border-radius:50%;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:100;}
+.close-btn:hover{border-color:var(--danger);color:var(--danger);}
+</style>
+</head>
+<body>
+<button class="close-btn" onclick="closeGame()">✕</button>
+
+<!-- MENU -->
+<div id="menu" class="screen active">
+  <h1>Dual Task</h1>
+  <p class="subtitle">Atenção dividida: acompanhe o ponto <strong>E</strong> responda os sons simultaneamente.</p>
+  <div class="glass" style="text-align:left;font-size:.82rem;color:var(--muted);line-height:2;">
+    🟣 Mova o dedo para acompanhar o ponto roxo<br>
+    <span style="color:var(--low);">🔵 Tom grave</span> → toque em <strong style="color:var(--low);">GRAVE</strong><br>
+    <span style="color:var(--high);">🔴 Tom agudo</span> → toque em <strong style="color:var(--high);">AGUDO</strong><br><br>
+    <span style="color:var(--muted);">Faça as duas tarefas ao mesmo tempo!</span>
+  </div>
+  <button class="btn btn-primary" onclick="startGame()">INICIAR — 60s</button>
+  <button class="btn btn-secondary" onclick="closeGame()">← Voltar</button>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <div class="top-bar">
+    <div>
+      <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Tempo</div>
+      <div class="timer-big" id="timer">60</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Pontos</div>
+      <div class="score-big" id="score">0</div>
+    </div>
+  </div>
+  <div class="time-bar-wrap"><div class="time-bar-fill" id="time-bar"></div></div>
+
+  <!-- TRACKING -->
+  <div class="track-arena" id="track-arena">
+    <div class="track-label">↕ RASTREAR — arraste o dedo</div>
+    <div class="track-target" id="track-target"></div>
+    <div class="cursor-dot" id="cursor-dot" style="left:50%;top:50%;"></div>
+    <div class="distance-bar"><div class="distance-fill" id="dist-fill" style="width:0%;background:var(--success);"></div></div>
+  </div>
+
+  <!-- AUDIO TASK -->
+  <div class="audio-panel">
+    <div class="audio-label">Som:</div>
+    <div class="tone-indicator" id="tone-indicator">🔇</div>
+    <div class="audio-btns">
+      <button class="tone-btn low" id="btn-low"  onclick="answerTone('low')"  disabled>▼ GRAVE</button>
+      <button class="tone-btn high" id="btn-high" onclick="answerTone('high')" disabled>▲ AGUDO</button>
+    </div>
+  </div>
+
+  <div class="metrics-row">
+    <div class="metric"><div class="metric-val" id="m-track">100%</div><div class="metric-lbl">Rastreio</div></div>
+    <div class="metric"><div class="metric-val" id="m-audio-hit">0</div><div class="metric-lbl">Tons certos</div></div>
+    <div class="metric"><div class="metric-val" id="m-audio-err">0</div><div class="metric-lbl">Tons erros</div></div>
+    <div class="metric"><div class="metric-val" id="m-combo">0</div><div class="metric-lbl">Combo</div></div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="screen">
+  <h1>Resultado</h1>
+  <div class="glass">
+    <div class="metrics-row" style="margin-bottom:14px;">
+      <div class="metric"><div class="metric-val" id="r-score" style="color:var(--accent);">0</div><div class="metric-lbl">Pontos</div></div>
+      <div class="metric"><div class="metric-val" id="r-track">0%</div><div class="metric-lbl">Rastreio</div></div>
+      <div class="metric"><div class="metric-val" id="r-audio">0%</div><div class="metric-lbl">Áudio</div></div>
+    </div>
+    <div id="r-msg" style="font-size:.85rem;color:var(--muted);line-height:1.6;text-align:left;padding:12px;background:rgba(0,0,0,.2);border-radius:10px;"></div>
+  </div>
+  <button class="btn btn-primary" onclick="startGame()">Jogar Novamente</button>
+  <button class="btn btn-secondary" onclick="showScreen('menu')">← Menu</button>
+</div>
+
+<script>
+const DURATION=60;
+const TONE_INTERVAL_MIN=2500;
+const TONE_INTERVAL_MAX=5000;
+const TONE_WINDOW=1800; // ms para responder
+const TRACK_SPEED_BASE=1.2; // px/frame
+
+let score=0,audioHits=0,audioErrors=0,combo=0,maxCombo=0;
+let timeLeft=DURATION,timerInterval=null;
+let trackX=50,trackY=50,targetX=50,targetY=50;
+let velX=0,velY=0;
+let cursorX=50,cursorY=50;
+let trackFrames=0,trackHitFrames=0;
+let toneTimeout=null,toneType=null,toneActive=false,toneAnswered=false;
+let animFrame=null;
+let arenaW=0,arenaH=0;
+let audioCtx=null;
+let isDragging=false;
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function initAudio(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+}
+
+function playTone(freq,dur){
+  try{
+    if(!audioCtx)return;
+    if(audioCtx.state==='suspended')audioCtx.resume();
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+    osc.connect(gain);gain.connect(audioCtx.destination);
+    osc.type='sine';osc.frequency.value=freq;
+    gain.gain.setValueAtTime(0,audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(.25,audioCtx.currentTime+.01);
+    gain.gain.setValueAtTime(.25,audioCtx.currentTime+dur-.05);
+    gain.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);
+    osc.start();osc.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+
+function startGame(){
+  score=0;audioHits=0;audioErrors=0;combo=0;maxCombo=0;
+  timeLeft=DURATION;trackFrames=0;trackHitFrames=0;toneActive=false;
+  cursorX=50;cursorY=50;trackX=50;trackY=50;targetX=50;targetY=50;
+  velX=(Math.random()-.5)*TRACK_SPEED_BASE*2;
+  velY=(Math.random()-.5)*TRACK_SPEED_BASE*2;
+  document.getElementById('score').innerText=0;
+  document.getElementById('m-audio-hit').innerText=0;
+  document.getElementById('m-audio-err').innerText=0;
+  document.getElementById('m-combo').innerText=0;
+  document.getElementById('m-track').innerText='100%';
+  document.getElementById('timer').className='timer-big';
+  document.getElementById('time-bar').style.width='100%';
+  document.getElementById('tone-indicator').innerText='🔇';
+  document.getElementById('tone-indicator').className='tone-indicator';
+  document.getElementById('btn-low').disabled=true;
+  document.getElementById('btn-high').disabled=true;
+  initAudio();
+  showScreen('game');
+  const arena=document.getElementById('track-arena');
+  arenaW=arena.clientWidth;arenaH=arena.clientHeight;
+  setupTracking();
+  timerInterval=setInterval(tick,1000);
+  animFrame=requestAnimationFrame(gameLoop);
+  scheduleTone();
+}
+
+function setupTracking(){
+  const arena=document.getElementById('track-arena');
+  arena.addEventListener('mousemove',onMove);
+  arena.addEventListener('touchstart',e=>{e.preventDefault();isDragging=true;onMove(e.touches[0]);},{passive:false});
+  arena.addEventListener('touchmove',e=>{e.preventDefault();if(isDragging)onMove(e.touches[0]);},{passive:false});
+  arena.addEventListener('touchend',()=>{isDragging=false;});
+  arena.addEventListener('mousedown',()=>{isDragging=true;});
+  arena.addEventListener('mouseup',()=>{isDragging=false;});
+}
+
+function onMove(e){
+  if(!isDragging&&e.type==='mousemove')return;
+  const arena=document.getElementById('track-arena');
+  const rect=arena.getBoundingClientRect();
+  const x=e.clientX||e.pageX;
+  const y=e.clientY||e.pageY;
+  cursorX=Math.max(0,Math.min(100,((x-rect.left)/rect.width)*100));
+  cursorY=Math.max(0,Math.min(100,((y-rect.top)/rect.height)*100));
+}
+
+function gameLoop(){
+  if(timeLeft<=0)return;
+  // Move alvo suavemente com bounce
+  trackX+=velX;trackY+=velY;
+  if(trackX<5||trackX>95){velX*=-1;trackX=Math.max(5,Math.min(95,trackX));}
+  if(trackY<5||trackY>85){velY*=-1;trackY=Math.max(5,Math.min(85,trackY));}
+  // Leve aceleração aleatória
+  if(Math.random()<.02){velX+=(Math.random()-.5)*.5;velY+=(Math.random()-.5)*.5;}
+  const maxSpd=TRACK_SPEED_BASE*(1+(.5*(DURATION-timeLeft)/DURATION));
+  const spd=Math.sqrt(velX*velX+velY*velY);
+  if(spd>maxSpd){velX=(velX/spd)*maxSpd;velY=(velY/spd)*maxSpd;}
+
+  // Calcula distância cursor→alvo (%)
+  const dx=cursorX-trackX,dy=cursorY-trackY;
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  const hit=dist<8;
+  trackFrames++;
+  if(hit)trackHitFrames++;
+
+  // Atualiza DOM do tracking
+  const tgt=document.getElementById('track-target');
+  tgt.style.left=trackX+'%';tgt.style.top=trackY+'%';
+  const crs=document.getElementById('cursor-dot');
+  crs.style.left=cursorX+'%';crs.style.top=cursorY+'%';
+  const arena=document.getElementById('track-arena');
+  if(hit) arena.classList.add('track-hit'); else arena.classList.remove('track-hit');
+  const df=document.getElementById('dist-fill');
+  const pct=Math.max(0,100-dist*2.5);
+  df.style.width=pct+'%';
+  df.style.background=pct>60?'var(--success)':pct>30?'#fbbf24':'var(--danger)';
+  // Pontos de rastreio
+  if(hit){score+=1;}
+  document.getElementById('score').innerText=score;
+  const trackPct=trackFrames>0?Math.round((trackHitFrames/trackFrames)*100):100;
+  document.getElementById('m-track').innerText=trackPct+'%';
+  animFrame=requestAnimationFrame(gameLoop);
+}
+
+function tick(){
+  timeLeft--;
+  document.getElementById('timer').innerText=timeLeft;
+  const r=timeLeft/DURATION;
+  document.getElementById('time-bar').style.width=(r*100)+'%';
+  document.getElementById('time-bar').style.background=r>.5?'var(--accent)':r>.25?'#fbbf24':'var(--danger)';
+  if(timeLeft<=10)document.getElementById('timer').classList.add('urgent');
+  if(timeLeft<=0){clearInterval(timerInterval);cancelAnimationFrame(animFrame);clearTimeout(toneTimeout);endGame();}
+}
+
+function scheduleTone(){
+  if(timeLeft<=0)return;
+  const delay=TONE_INTERVAL_MIN+Math.random()*(TONE_INTERVAL_MAX-TONE_INTERVAL_MIN);
+  toneTimeout=setTimeout(fireTone,delay);
+}
+
+function fireTone(){
+  if(timeLeft<=0)return;
+  toneType=Math.random()<.5?'low':'high';
+  toneActive=true;toneAnswered=false;
+  const freq=toneType==='low'?200:800;
+  const dur=.35;
+  playTone(freq,dur);
+  const ind=document.getElementById('tone-indicator');
+  ind.innerText=toneType==='low'?'🔵':'🔴';
+  ind.className='tone-indicator '+(toneType==='low'?'low-active':'high-active');
+  document.getElementById('btn-low').disabled=false;
+  document.getElementById('btn-high').disabled=false;
+  // Janela de resposta
+  toneTimeout=setTimeout(()=>{
+    if(!toneAnswered){
+      // Miss
+      audioErrors++;combo=0;
+      document.getElementById('m-audio-err').innerText=audioErrors;
+      document.getElementById('m-combo').innerText=combo;
+      resetToneUI();
+    }
+    scheduleTone();
+  },TONE_WINDOW);
+}
+
+function answerTone(type){
+  if(!toneActive||toneAnswered)return;
+  toneAnswered=true;
+  clearTimeout(toneTimeout);
+  const btn=document.getElementById('btn-'+type);
+  if(type===toneType){
+    audioHits++;combo++;maxCombo=Math.max(maxCombo,combo);
+    score+=10+(combo>3?10:0);
+    btn.classList.add('flash-ok');
+    setTimeout(()=>btn.classList.remove('flash-ok'),220);
+  } else {
+    audioErrors++;combo=0;
+    btn.classList.add('flash-err');
+    setTimeout(()=>btn.classList.remove('flash-err'),220);
+  }
+  document.getElementById('m-audio-hit').innerText=audioHits;
+  document.getElementById('m-audio-err').innerText=audioErrors;
+  document.getElementById('m-combo').innerText=combo;
+  document.getElementById('score').innerText=score;
+  resetToneUI();
+  scheduleTone();
+}
+
+function resetToneUI(){
+  toneActive=false;
+  document.getElementById('tone-indicator').innerText='🔇';
+  document.getElementById('tone-indicator').className='tone-indicator';
+  document.getElementById('btn-low').disabled=true;
+  document.getElementById('btn-high').disabled=true;
+}
+
+function endGame(){
+  cancelAnimationFrame(animFrame);
+  clearTimeout(toneTimeout);
+  clearInterval(timerInterval);
+  const audioTotal=audioHits+audioErrors;
+  const audioAcc=audioTotal>0?Math.round((audioHits/audioTotal)*100):0;
+  const trackPct=trackFrames>0?Math.round((trackHitFrames/trackFrames)*100):0;
+  document.getElementById('r-score').innerText=score;
+  document.getElementById('r-track').innerText=trackPct+'%';
+  document.getElementById('r-audio').innerText=audioAcc+'%';
+  let msg='';
+  const dual=(trackPct+audioAcc)/2;
+  if(dual>=80) msg='🔥 Atenção dividida excepcional! Gerenciar dois canais simultâneos com essa eficiência é raro.';
+  else if(dual>=60) msg='✅ Boa atenção dividida. A prática reduz progressivamente o custo de gerenciar dois canais.';
+  else msg='💪 O Dual Task é o mais exigente. Comece priorizando o rastreio, depois equilibre o áudio.';
+  msg+=`\nRastreio: ${trackPct}% | Áudio: ${audioAcc}% | Combo máx: ${maxCombo}`;
+  document.getElementById('r-msg').innerText=msg;
+  showScreen('result');
+}
+
+function closeGame(){
+  clearInterval(timerInterval);
+  cancelAnimationFrame(animFrame);
+  clearTimeout(toneTimeout);
+  if(window.parent!==window) window.parent.postMessage({type:'BRAINHUNTER_CLOSE'},'*');
+  else showScreen('menu');
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'||e.key==='g'||e.key==='G') answerTone('low');
+  if(e.key==='ArrowUp'||e.key==='h'||e.key==='H') answerTone('high');
+  if(e.key==='Escape') closeGame();
+});
+</script>
+</body>
+</html>

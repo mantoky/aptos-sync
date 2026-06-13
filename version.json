@@ -1,12 +1,13 @@
 {
-  "version": "1.3.0",
+  "version": "1.4.0",
   "date": "2026-06-13",
   "changelog": [
-    "🎮 BrainHunter Pro v4 integrado — motor musical, combo e pistas",
-    "🎵 Temas sonoros: Pagode, Samba, Rock e Pop sintetizados",
-    "🔥 Sistema de combo com multiplicador de pontuação",
-    "💡 Sistema de pistas configurável por nível",
-    "📊 Score flutuante e toast de feedback",
-    "⏸ Timer pausável ao abrir configurações"
+    "🎮 Pack Cognitivo completo — 7 jogos integrados",
+    "🔢 N-Back Lite — memória de trabalho com adaptação automática",
+    "🎨 Stroop Color — controle inibitório com 3 níveis",
+    "🟣 Matrix Sequence — Corsi Block, memória visuoespacial",
+    "🔄 Task Switch — flexibilidade cognitiva com custo de troca",
+    "👁️ Visual Search — atenção seletiva em grades progressivas",
+    "🔵 Dual Task — atenção dividida visual + auditiva"
   ]
 }

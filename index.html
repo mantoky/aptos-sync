@@ -340,29 +340,35 @@ button.icon-btn:hover{background:rgba(218,119,86,0.1);border-color:rgba(218,119,
 #games-hub{
   display:none;
   flex:1;flex-direction:column;
-  align-items:center;
-  padding:16px;
+  align-items:stretch;
+  padding:16px 20px;
   overflow-y:auto;
 }
 #games-hub.open{display:flex;}
 #games-hub h2{color:#c8d8f0;font-size:1rem;margin-bottom:14px;letter-spacing:.5px;text-align:center;flex-shrink:0;}
+.games-hub-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:12px;
+  width:100%;
+}
 .game-card{
-  width:100%;max-width:320px;
+  width:100%;max-width:100%;
   background:rgba(255,255,255,0.04);
   border:1px solid rgba(255,255,255,0.08);
-  border-radius:16px;padding:20px;
+  border-radius:16px;padding:16px 18px;
   cursor:pointer;transition:all .2s;
-  display:flex;align-items:center;gap:16px;
-  text-align:left;margin-bottom:12px;
+  display:flex;align-items:center;gap:14px;
+  text-align:left;
 }
 .game-card:hover{
   background:rgba(218,119,86,.08);
   border-color:rgba(218,119,86,.3);
   transform:translateY(-2px);
 }
-.game-card .gc-icon{font-size:2.2rem;flex-shrink:0;}
-.game-card .gc-name{font-size:1rem;font-weight:700;color:#c8d8f0;margin-bottom:3px;}
-.game-card .gc-desc{font-size:.75rem;color:#4a6080;line-height:1.4;}
+.game-card .gc-icon{font-size:2rem;flex-shrink:0;}
+.game-card .gc-name{font-size:.95rem;font-weight:700;color:#c8d8f0;margin-bottom:3px;}
+.game-card .gc-desc{font-size:.72rem;color:#4a6080;line-height:1.4;}
 @media(min-width:600px){.screen-inner{max-width:440px;}}
 /* Landscape mobile */
 @media(max-height:500px) and (orientation:landscape){
@@ -613,6 +619,7 @@ button.icon-btn:hover{background:rgba(218,119,86,0.1);border-color:rgba(218,119,
   <!-- Hub de seleção de jogos -->
   <div id="games-hub" class="open">
     <h2>🧠 Pack Cognitivo</h2>
+    <div class="games-hub-grid">
     <div class="game-card" onclick="launchGame('board-games.html','♟ Board Games Pack')">
       <span class="gc-icon">♟</span>
       <div><div class="gc-name">Board Games Pack</div><div class="gc-desc">7 clássicos de tabuleiro — Damas, Ludo, Reversi, Connect Four, Batalha Naval, Velha+ e Sudoku</div></div>
@@ -645,7 +652,8 @@ button.icon-btn:hover{background:rgba(218,119,86,0.1);border-color:rgba(218,119,
       <span class="gc-icon">🔵</span>
       <div><div class="gc-name">Dual Task</div><div class="gc-desc">Atenção dividida · Rastreie o ponto e responda os sons ao mesmo tempo</div></div>
     </div>
-  </div>
+  </div><!-- /games-hub-grid -->
+  </div><!-- /games-hub -->
   <!-- iframe do jogo selecionado -->
   <iframe id="games-frame" src="" allow="fullscreen" style="display:none;"></iframe>
 </div>
@@ -1272,6 +1280,7 @@ function openGames(){
 }
 
 function launchGame(src,title){
+  abTrack('game_open',{game:src,title});
   const hub=document.getElementById('games-hub');
   const frame=document.getElementById('games-frame');
   hub.classList.remove('open');
@@ -1369,34 +1378,12 @@ function openAbDashboard(){
   }
 }
 
-// Intercepta openGames para rastrear evento
-const _openGames_orig = typeof openGames !== 'undefined' ? openGames : null;
-
-// Intercepta launchGame para rastrear qual jogo foi aberto
-const _launchGame_orig = launchGame;
-function launchGame(src, title){
-  abTrack('game_open', {game: src, title});
-  _launchGame_orig(src, title);
-}
-
 function abInit(){
   // Incrementa contador de sessões
   const sessions = parseInt(localStorage.getItem(AB_SESSIONS)||'0') + 1;
   localStorage.setItem(AB_SESSIONS, sessions);
   abTrack('session_start', {session: sessions});
-
-  const choice = abGetChoice();
-  updateAbBadge();
-
-  // Só mostra o modal se: nunca decidiu E é a 1ª ou 3ª sessão (não aparece toda hora)
-  if(!choice && (sessions === 1 || sessions === 3)){
-    // Aguarda login para não interromper
-    setTimeout(()=>{
-      if(document.getElementById('start-screen').classList.contains('active')){
-        showAbModal();
-      }
-    }, 1800);
-  }
+  // Badge atualizado após login (no enterApp), não no boot
 }
 
 /* ══════ BOOT ══════ */

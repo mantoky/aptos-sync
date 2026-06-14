@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aptos-sync-v1.6.0';
+const CACHE_NAME = 'aptos-sync-v1.6.1';
 const ASSETS = [
   '/',
   '/index.html',
@@ -10,6 +10,13 @@ const ASSETS = [
   '/visualsearch.html',
   '/dualtask.html',
   '/board-games.html',
+  '/damas.html',
+  '/ludo.html',
+  '/reversi.html',
+  '/connect-four.html',
+  '/batalha-naval.html',
+  '/velha.html',
+  '/sudoku.html',
   '/ab-dashboard.html',
   '/manifest.json',
   '/version.json',

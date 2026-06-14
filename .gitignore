@@ -6,3 +6,6 @@ node_modules/
 .firebase/
 .env
 *.log
+
+# Local Netlify folder
+.netlify

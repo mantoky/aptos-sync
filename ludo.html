@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Ludo</title>
+<style>
+:root{--bg:#060818;--card:rgba(255,255,255,.05);--border:rgba(255,255,255,.1);--accent:#4ecdc4;--text:#c8d8f0;--muted:#6d7f9b;--red:#ff6b6b;--yellow:#ffe66d;--green:#00e676;--blue:#4fc3f7}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',system-ui,sans-serif;background:radial-gradient(circle at top,#0b3534,var(--bg) 60%);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:14px;user-select:none}
+.wrap{width:100%;max-width:430px;text-align:center}.close{position:fixed;top:14px;right:14px;width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--muted);font-weight:900;cursor:pointer}
+h1{font-size:2rem;font-weight:900;background:linear-gradient(135deg,var(--accent),#99f6e4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}.sub{color:var(--muted);font-size:.86rem;margin:8px 0 12px;line-height:1.4}.panel{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:14px}
+.status{font-weight:850;color:#99f6e4;margin-bottom:10px;min-height:42px}.die{width:84px;height:84px;border-radius:18px;margin:0 auto 12px;background:rgba(0,0,0,.25);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:2.8rem;font-weight:900;color:#fff}
+.track{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin:12px 0}.step{aspect-ratio:1;border-radius:9px;border:1px solid var(--border);background:rgba(0,0,0,.22);font-size:.65rem;display:flex;align-items:center;justify-content:center;color:var(--muted)}.step.has{outline:2px solid var(--accent);color:#fff}
+.players{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.p{border-radius:12px;padding:9px;background:rgba(0,0,0,.18);border:1px solid var(--border)}.p b{display:block;font-size:1.25rem}.human{border-color:var(--blue)}
+.row{display:flex;gap:10px;margin-top:12px}.btn{flex:1;padding:12px;border:none;border-radius:10px;font-weight:850;cursor:pointer}.primary{background:linear-gradient(135deg,var(--accent),#0d9488);color:#02201e}.secondary{background:var(--card);border:1px solid var(--border);color:var(--text)}
+</style>
+</head>
+<body>
+<button class="close" onclick="closeGame()">X</button>
+<main class="wrap">
+  <h1>Ludo</h1>
+  <p class="sub">Corrida simplificada: voce e tres bots disputam quem chega primeiro ao fim da trilha.</p>
+  <section class="panel">
+    <div class="status" id="status">Role o dado para mover sua peca azul.</div>
+    <div class="die" id="die">-</div>
+    <div class="track" id="track"></div>
+    <div class="players" id="players"></div>
+    <div class="row"><button class="btn primary" id="roll" onclick="humanRoll()">Rolar dado</button><button class="btn secondary" onclick="newGame()">Novo</button><button class="btn secondary" onclick="closeGame()">Voltar</button></div>
+  </section>
+</main>
+<script>
+const LEN=24,names=['Voce','Bot A','Bot B','Bot C'],colors=['var(--blue)','var(--red)','var(--yellow)','var(--green)'];let pos=[],turn=0,locked=false;
+function newGame(){pos=[0,0,0,0];turn=0;locked=false;document.getElementById('die').textContent='-';document.getElementById('roll').disabled=false;status('Role o dado para mover sua peca azul.');render();}
+function render(){const t=document.getElementById('track');t.innerHTML='';for(let i=0;i<=LEN;i++){const s=document.createElement('div');s.className='step '+(pos.includes(i)?'has':'');s.textContent=i;t.appendChild(s)}const p=document.getElementById('players');p.innerHTML='';pos.forEach((v,i)=>{const d=document.createElement('div');d.className='p '+(i===0?'human':'');d.style.color=colors[i];d.innerHTML='<b>'+v+'</b>'+names[i];p.appendChild(d)});}
+function roll(){return 1+Math.floor(Math.random()*6)}
+function humanRoll(){if(locked||turn!==0)return;step(0,roll());if(pos[0]>=LEN)return finish('Voce venceu a corrida!');locked=true;setTimeout(botTurn,600)}
+function botTurn(){turn=1;botStep();}
+function botStep(){if(turn>3){turn=0;locked=false;status('Sua vez. Role o dado.');render();return}const d=roll();step(turn,d);if(pos[turn]>=LEN)return finish(names[turn]+' venceu.');turn++;setTimeout(botStep,520)}
+function step(i,d){document.getElementById('die').textContent=d;pos[i]=Math.min(LEN,pos[i]+d);for(let j=0;j<pos.length;j++)if(j!==i&&pos[j]===pos[i]&&pos[i]!==0&&pos[i]!==LEN)pos[j]=0;status(names[i]+' rolou '+d+'.');render();}
+function finish(t){locked=true;document.getElementById('roll').disabled=true;status(t);render()}
+function status(t){document.getElementById('status').textContent=t}
+function closeGame(){if(window.parent!==window)window.parent.postMessage({type:'BRAINHUNTER_CLOSE'},'*');else location.href='index.html';}
+newGame();
+</script>
+</body>
+</html>

@@ -1,10 +1,9 @@
 {
-  "version": "1.6.0",
-  "date": "2026-06-13",
+  "version": "1.6.1",
+  "date": "2026-06-14",
   "changelog": [
-    "🧪 Teste A/B do Board Games Pack — escolha sua versão",
-    "📊 Dashboard de aderência disponível (toque no badge de versão)",
-    "♟ Versão B inclui 7 jogos de tabuleiro clássicos",
-    "📈 Eventos rastreados localmente com privacidade total"
+    "Board Games Pack completo com 7 jogos jogaveis",
+    "Corrigidos links quebrados do hub de jogos",
+    "Novas paginas incluidas no cache offline da PWA"
   ]
 }

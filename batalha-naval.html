@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Batalha Naval</title>
+<style>
+:root{--bg:#060818;--card:rgba(255,255,255,.05);--border:rgba(255,255,255,.1);--accent:#06b6d4;--text:#c8d8f0;--muted:#6d7f9b;--hit:#ff6b6b;--miss:#4fc3f7;--ship:#94a3b8}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',system-ui,sans-serif;background:radial-gradient(circle at top,#063344,var(--bg) 60%);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:12px;user-select:none}
+.wrap{width:100%;max-width:460px;text-align:center}.close{position:fixed;top:14px;right:14px;width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--muted);font-weight:900;cursor:pointer}
+h1{font-size:2rem;font-weight:900;background:linear-gradient(135deg,var(--accent),#67e8f9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}.sub{color:var(--muted);font-size:.84rem;margin:8px 0 12px;line-height:1.4}.panel{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:13px}
+.status{font-weight:850;color:#67e8f9;margin-bottom:10px;min-height:22px}.boards{display:grid;grid-template-columns:1fr 1fr;gap:10px}.label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:3px}.cell{aspect-ratio:1;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:#061b32;color:#fff;font-weight:900;cursor:pointer}.ship{background:#334155}.hit{background:var(--hit)}.miss{background:rgba(79,195,247,.25)}.enemy .cell:hover{outline:2px solid var(--accent)}
+.row{display:flex;gap:10px;margin-top:12px}.btn{flex:1;padding:12px;border:none;border-radius:10px;font-weight:850;cursor:pointer}.primary{background:linear-gradient(135deg,var(--accent),#0891b2);color:#fff}.secondary{background:var(--card);border:1px solid var(--border);color:var(--text)}
+</style>
+</head>
+<body>
+<button class="close" onclick="closeGame()">X</button>
+<main class="wrap">
+  <h1>Batalha Naval</h1>
+  <p class="sub">Ataque a grade inimiga. Sua frota ja entra posicionada automaticamente.</p>
+  <section class="panel">
+    <div class="status" id="status">Sua vez: escolha uma coordenada inimiga.</div>
+    <div class="boards">
+      <div><div class="label">Sua frota</div><div class="grid" id="player"></div></div>
+      <div><div class="label">Inimigo</div><div class="grid enemy" id="enemy"></div></div>
+    </div>
+    <div class="row"><button class="btn primary" onclick="newGame()">Novo jogo</button><button class="btn secondary" onclick="closeGame()">Voltar</button></div>
+  </section>
+</main>
+<script>
+const N=6,ships=[3,2,2,1];let p=[],e=[],locked=false;
+function blank(){return Array.from({length:N},()=>Array.from({length:N},()=>({ship:0,hit:0})))}
+function place(g){let id=1;for(const len of ships){let ok=false;while(!ok){let hor=Math.random()<.5,r=Math.floor(Math.random()*N),c=Math.floor(Math.random()*N);if(hor&&c+len>N||!hor&&r+len>N)continue;let cells=[];for(let k=0;k<len;k++)cells.push([r+(hor?0:k),c+(hor?k:0)]);if(cells.every(([rr,cc])=>!g[rr][cc].ship)){cells.forEach(([rr,cc])=>g[rr][cc].ship=id);ok=true;id++;}}}}
+function newGame(){p=blank();e=blank();place(p);place(e);locked=false;status('Sua vez: escolha uma coordenada inimiga.');render();}
+function render(){draw('player',p,true);draw('enemy',e,false)}
+function draw(id,g,show){const el=document.getElementById(id);el.innerHTML='';for(let r=0;r<N;r++)for(let c=0;c<N;c++){const b=document.createElement('button');let cls='cell ';if(g[r][c].hit&&g[r][c].ship)cls+='hit';else if(g[r][c].hit)cls+='miss';else if(show&&g[r][c].ship)cls+='ship';b.className=cls;b.textContent=g[r][c].hit?(g[r][c].ship?'X':'-'):'';if(!show)b.onclick=()=>fire(r,c);el.appendChild(b)}}
+function fire(r,c){if(locked||e[r][c].hit)return;e[r][c].hit=1;render();if(allSunk(e))return finish('Voce afundou toda a frota inimiga!');locked=true;status(e[r][c].ship?'Acertou! IA contra-ataca...':'Agua. IA contra-ataca...');setTimeout(ai,650)}
+function ai(){let targets=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(!p[r][c].hit)targets.push([r,c]);let [r,c]=targets[Math.floor(Math.random()*targets.length)];p[r][c].hit=1;render();if(allSunk(p))return finish('Sua frota foi afundada.');locked=false;status(p[r][c].ship?'IA acertou. Sua vez.':'IA errou. Sua vez.')}
+function allSunk(g){for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(g[r][c].ship&&!g[r][c].hit)return false;return true}
+function finish(t){locked=true;status(t);render()}function status(t){document.getElementById('status').textContent=t}
+function closeGame(){if(window.parent!==window)window.parent.postMessage({type:'BRAINHUNTER_CLOSE'},'*');else location.href='index.html';}
+newGame();
+</script>
+</body>
+</html>
